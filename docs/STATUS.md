@@ -8,15 +8,15 @@ _Last updated: 2026-11-08 (Phase 1)._
 
 | Component | Built | Tested | Configured | Deployed | Notes |
 |---|---|---|---|---|---|
-| Database schema (all brief tables, four channels) | ✅ | ✅ | ❌ | ❌ | Tested on local Postgres 16; CI runs Postgres 17 (Supabase's version) |
-| Row Level Security + grants on every table | ✅ | ✅ | ❌ | ❌ | Cross-workspace, roles, revocation, views, storage |
+| Database schema (all brief tables, four channels) | ✅ | ✅ | ✅ | ✅ | Applied to Supabase project `Partnerships` on 2026-11-08; owner's verification (`02_verify.sql`) all OK. Tests pass on Postgres 16 locally and 17 in CI |
+| Row Level Security + grants on every table | ✅ | ✅ | ✅ | ✅ | Cross-workspace, roles, revocation, views, storage |
 | Append-only evidence, idempotent events | ✅ | ✅ | ❌ | ❌ | |
 | Approvals: immutable payload, hash-confirmed decision, single execution, expiry, approver revocation | ✅ | ✅ | ❌ | ❌ | Database layer only; UI in Phase 3 |
 | Task leases: atomic claims, scope, retries, dead-letter, cancellation, backpressure | ✅ | ✅ | ❌ | ❌ | Database layer only; MCP tools in Phase 4 |
 | Private attachments bucket + policies | ✅ | ✅ (against stub) | ❌ | ❌ | Needs re-check on a real Supabase project |
 | Web app: invite-only magic-link login, overview | ✅ | Smoke-tested locally | ❌ | ❌ | Not yet tried against a live Supabase project |
 | Workspace bootstrap tool | ✅ | ❌ | ❌ | — | Needs a real Supabase project |
-| CI workflow | ✅ | — | — | — | Runs on push |
+| CI workflow | ✅ | ✅ | — | — | Green on GitHub Actions (Postgres 17) |
 
 **Test count:** 69 database tests + 2 unit tests, all passing.
 
