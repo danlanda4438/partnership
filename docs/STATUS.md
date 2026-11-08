@@ -34,5 +34,7 @@ _Last updated: 2026-11-08 (Phase 1)._
 
 ## Decisions recorded
 
+- **Supabase project:** `Partnerships` (ref `ujtgbkilcownazwudtjt`, org Invitfull, region ap-southeast-2). Set up by the owner via the SQL Editor (`supabase/manual/`). No Supabase keys are held by the build sessions.
+
 - **Gmail:** bots already have Gmail access. The app does not hold its own Gmail connection at first. Bots send approved payloads and report provider message IDs back. The bots' own connector confirmation still applies. An app-owned read-only Gmail connection may be added later for independent verification.
 - **Hosting (proposed):** Vercel (web) + Supabase + one small worker service. To be confirmed before deployment.

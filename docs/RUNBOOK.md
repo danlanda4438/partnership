@@ -9,6 +9,17 @@
 
 ## 2. Apply the database migrations
 
+**Option A, no command line (recommended for the first setup):** in the Supabase Dashboard open **SQL Editor → New query** and run these files from `supabase/manual/` in order, pasting each one in full:
+
+1. `00_precheck.sql`: read-only. `existing_tables` must be 0; if not, stop.
+2. `01_setup.sql`: creates everything in one transaction (all or nothing) and records the migrations for the CLI.
+3. `02_verify.sql`: read-only. Every row must say `OK`.
+4. `03_first_owner.sql`: creates the Gleeday workspace and makes you owner. First create your user under Authentication → Users → Add user, with Auto Confirm ticked.
+
+`01_setup.sql` is generated. After adding a migration, rebuild it with `tools/build-manual-setup.sh`.
+
+**Option B, Supabase CLI:**
+
 ```bash
 pnpm exec supabase login
 ```
