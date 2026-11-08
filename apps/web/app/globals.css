@@ -1,0 +1,65 @@
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --text: #1c1c1a;
+  --muted: #6b6b66;
+  --border: #e3e3de;
+  --accent: #2f5d50;
+  --warn-bg: #fff6e0;
+  --warn-text: #7a5200;
+  --ok-bg: #e7f4ec;
+  --ok-text: #1f5c36;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141413;
+    --surface: #1d1d1b;
+    --text: #ededea;
+    --muted: #a3a39d;
+    --border: #33332f;
+    --accent: #7fbfa9;
+    --warn-bg: #3a2e10;
+    --warn-text: #f3d48a;
+    --ok-bg: #173123;
+    --ok-text: #9fdcb5;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+a { color: var(--accent); }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+header.top {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface);
+}
+header.top strong { font-size: 16px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 28px 0 10px; }
+.muted { color: var(--muted); }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.card h3 { margin: 0 0 8px; font-size: 15px; }
+.stat { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+td, th { text-align: left; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+th { color: var(--muted); font-weight: 500; }
+td.num, th.num { text-align: right; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+.pill.warn { background: var(--warn-bg); color: var(--warn-text); }
+.pill.ok { background: var(--ok-bg); color: var(--ok-text); }
+.notice { background: var(--warn-bg); color: var(--warn-text); border-radius: 10px; padding: 12px 16px; }
+form.stack { display: grid; gap: 10px; max-width: 360px; }
+input[type="email"] {
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text); font: inherit;
+}
+button {
+  padding: 10px 14px; border: 0; border-radius: 8px; background: var(--accent);
+  color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+}
+button.link { background: none; color: var(--accent); padding: 0; font-weight: 500; }

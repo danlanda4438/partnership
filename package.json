@@ -6,12 +6,18 @@
     "test": "pnpm test:db && pnpm -r --if-present test",
     "test:db": "vitest run --root tests/db",
     "typecheck": "pnpm -r --if-present typecheck",
-    "build": "pnpm -r --if-present build"
+    "build": "pnpm -r --if-present build",
+    "dev": "pnpm --filter @gleeday/web dev",
+    "db:push": "supabase db push",
+    "db:diff-check": "supabase db lint",
+    "bootstrap:workspace": "node tools/bootstrap-workspace.mjs"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "pg": "^8.23.1",
+    "supabase": "3.0.0",
     "typescript": "^5.9.3",
     "vitest": "^5.1.0"
   }
