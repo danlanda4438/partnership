@@ -1,0 +1,18 @@
+{
+  "name": "gleeday-operations-center",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "test": "pnpm test:db && pnpm -r --if-present test",
+    "test:db": "vitest run --root tests/db",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  }
+}
