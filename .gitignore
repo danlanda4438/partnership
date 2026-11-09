@@ -11,3 +11,5 @@ supabase/.temp/
 supabase/.branches/
 next-env.d.ts
 *.tsbuildinfo
+/sheets/
+*.xlsx
