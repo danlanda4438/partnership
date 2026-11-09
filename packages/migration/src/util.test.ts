@@ -28,3 +28,9 @@ describe("parseTime never invents precision", () => {
     expect(parseTime("Not recorded in source")).toEqual({ at: null, precision: "unknown", timezone: null, raw: "Not recorded in source" });
   });
 });
+
+describe("date cells", () => {
+  it("a date-only cell exported as midnight ISO is day precision, not unknown", () => {
+    expect(parseTime("2026-10-28T00:00:00.000Z").precision).toBe("day");
+  });
+});

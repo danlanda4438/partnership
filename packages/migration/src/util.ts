@@ -56,7 +56,7 @@ export function parseTime(raw: string | undefined | null): ParsedTime {
   if (m) return { at: zonedLocalToUtc(m[1], `${m[2]}:${m[3]}`, m[4]), precision: "minute", timezone: m[4], raw: r };
   const iso = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(r);
   if (iso && !(iso[2] === "00" && iso[3] === "00")) return { at: new Date(r).toISOString(), precision: "minute", timezone: "UTC", raw: r };
-  const d = /^(\d{4}-\d{2}-\d{2})\b/.exec(r);
+  const d = /^(\d{4}-\d{2}-\d{2})(?=$|[^0-9])/.exec(r);
   if (d) return { at: zonedLocalToUtc(d[1], "12:00", "Asia/Jerusalem"), precision: "day", timezone: "Asia/Jerusalem", raw: r };
   return { at: null, precision: "unknown", timezone: null, raw: r };
 }
