@@ -13,12 +13,14 @@
     "bootstrap:workspace": "node tools/bootstrap-workspace.mjs"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
     "@supabase/supabase-js": "^2.119.0",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "pg": "^8.23.1",
     "supabase": "3.0.0",
     "typescript": "^5.9.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "zod": "4.6.7"
   }
 }

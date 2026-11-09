@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { publicSupabaseEnv } from "../env";
 
-const PUBLIC_PATHS = ["/login", "/auth/"];
+// Bot endpoints authenticate with their own tokens (never Supabase sessions).
+const PUBLIC_PATHS = ["/login", "/auth/", "/api/mcp", "/api/worker/", "/.well-known/", "/oauth/"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

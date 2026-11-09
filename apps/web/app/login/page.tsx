@@ -4,9 +4,9 @@ import { sendLoginLink } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ sent?: string; error?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ sent?: string; error?: string; next?: string }> }) {
   if (!publicSupabaseEnv()) return <SetupNotice />;
-  const { sent, error } = await searchParams;
+  const { sent, error, next } = await searchParams;
   return (
     <main>
       <h1>Sign in</h1>
@@ -16,6 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       ) : (
         <form action={sendLoginLink} className="stack">
           <input type="email" name="email" required placeholder="you@gleeday.com" autoComplete="email" />
+          {next ? <input type="hidden" name="next" value={next} /> : null}
           <button type="submit">Email me a sign-in link</button>
         </form>
       )}

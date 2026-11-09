@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { admin } from "./helpers";
 
-const ALLOWED_PUBLIC_SECURITY_DEFINER = ["cancel_task", "create_worker", "decide_approval", "issue_worker_token", "revoke_worker_token", "set_member_role", "set_worker_channels", "ui_members", "ui_worker_tokens"];
+const ALLOWED_PUBLIC_SECURITY_DEFINER = ["cancel_task", "create_worker", "decide_approval", "issue_worker_token", "oauth_authorize", "oauth_client_info", "revoke_connector_grant", "revoke_worker_token", "set_member_role", "set_worker_channels", "ui_connectable_workers", "ui_connector_grants", "ui_members", "ui_worker_tokens"];
 
 describe("security baseline", () => {
   it("enables RLS on every table in exposed schema public", async () => {
