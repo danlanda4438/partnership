@@ -21,9 +21,10 @@ export interface Report {
   }>;
   exceptions: { kind: string; severity: string; count: number; examples: { title: string; detail: string; source: string | null }[] }[];
   history: { coveredByLedger: number; identifiedNotInLedger: number; unidentifiedHeld: number };
+  verification?: { applied: number; unmatched: { prospect: string; channel: string }[]; merged: string[]; changes: Record<string, number> };
 }
 
-export function buildReport(plan: Plan, snapshots: Snapshot[]): Report {
+export function buildReport(plan: Plan, snapshots: Snapshot[], verification?: Report["verification"]): Report {
   const count = <T>(xs: T[], f: (x: T) => string) => xs.reduce<Record<string, number>>((a, x) => { const k = f(x); a[k] = (a[k] ?? 0) + 1; return a; }, {});
   const opps = [...plan.opps.values()];
   const contacts = [...plan.contacts.values()];
@@ -72,6 +73,7 @@ export function buildReport(plan: Plan, snapshots: Snapshot[]): Report {
     exceptions: [...byKind.entries()].map(([kind, xs]) => ({ kind, severity: xs[0].severity, count: xs.length,
       examples: xs.slice(0, 12).map((e) => ({ title: e.title, detail: e.detail, source: e.source ? `${e.source.file} › ${e.source.tab} row ${e.source.row}` : null })) }))
       .sort((a, b) => b.count - a.count),
+    verification,
     history: { coveredByLedger: plan.historyMarkers.covered, identifiedNotInLedger: plan.historyMarkers.identifiedUncovered.length, unidentifiedHeld: plan.historyMarkers.unidentified.length },
   };
 }

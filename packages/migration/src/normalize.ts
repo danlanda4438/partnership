@@ -10,7 +10,7 @@
 //  * Drafts and connection-only actions are not contact. Platform labels stay labels.
 //  * No invented timestamps or recipients; unidentified historical markers are held.
 import { type Snapshot, type SnapshotRow, tab } from "./workbook";
-import { domainOf, emailDomain, emails, lower, norm, parseTime, slug, type ParsedTime } from "./util";
+import { domainOf, emailDomain, emails, lower, norm, orgDomain, parseTime, slug, type ParsedTime } from "./util";
 
 export type Channel = "affiliates" | "co_marketing" | "media_pr" | "listings";
 export type Stage = "contacted" | "replied" | "interested" | "discussion_proposal" | "agreed" | "live";
@@ -25,7 +25,7 @@ export interface PlanOpp {
   key: string; channel: Channel; orgKey: string; primaryContactKey: string | null;
   stage: Stage | null; stageEvidenceKey: string | null; disposition: Disposition | null; milestone: string | null;
   nextAction: string | null; nextActionDue: string | null; notes: string[]; attributes: Record<string, string>; sources: SourceRef[];
-  matchedBy: string[];
+  matchedBy: string[]; lastVerifiedKey?: string | null; lastVerifiedAt?: string | null;
 }
 export interface PlanMessage {
   provider: string; providerMessageId: string | null; threadId: string | null; direction: "outbound" | "inbound";
@@ -77,7 +77,7 @@ export function buildPlan(inp: Inputs): Plan {
   const domainOrg = new Map<string, string>();         // domain -> org key
   const channelOrgOpp = new Map<string, string>();     // `${channel}|${orgKey}` -> opp key
   const listingIdOpp = new Map<string, string>();      // listing partner_id -> opp key
-  const mediaNameOpp = new Map<string, string>();      // lower name -> opp key (Media & PR only)
+  const nameOpp = new Map<string, string>();           // `${channel}|${lower name}` -> opp key (reported links only)
 
   function upsertOrg(o: Omit<PlanOrg, "key" | "sources">, source: SourceRef, fallbackKey: string): string {
     const key = o.domain ? `org:domain:${o.domain}` : `org:${fallbackKey}`;
@@ -133,6 +133,8 @@ export function buildPlan(inp: Inputs): Plan {
       existing.notes.push(...notes);
       return key;
     }
+    const orgName = plan.orgs.get(orgKey)?.name;
+    if (orgName && !nameOpp.has(`${channel}|${lower(orgName)}`)) nameOpp.set(`${channel}|${lower(orgName)}`, key);
     plan.opps.set(key, { key, channel, orgKey, primaryContactKey: contactKey, stage: null, stageEvidenceKey: null, disposition: null,
       milestone: null, nextAction: null, nextActionDue: null, notes: [...notes], attributes: attrs, sources: [source], matchedBy: [] });
     channelOrgOpp.set(`${channel}|${orgKey}`, key);
@@ -151,7 +153,7 @@ export function buildPlan(inp: Inputs): Plan {
       const name = v(r, "Name"); if (!name) continue;
       const src = ref(s, t!.name, r);
       const website = v(r, "Website/blog URL") || null;
-      const orgKey = upsertOrg({ name, website, domain: domainOf(website), parentKey: null, location: v(r, "Location") || null, country: null,
+      const orgKey = upsertOrg({ name, website, domain: orgDomain(website, name), parentKey: null, location: v(r, "Location") || null, country: null,
         notes: v(r, "Personalization notes") || null }, src, `affiliates:${slug(name)}:r${r.rowNumber}`);
       const confidence = v(r, "Contact confidence");
       const verified = /^verified/i.test(confidence);
@@ -210,7 +212,7 @@ export function buildPlan(inp: Inputs): Plan {
         const name = v(r, "name"); if (!name) continue;
         const src = ref(s, t!.name, r);
         const website = v(r, "Website") || null;
-        const orgKey = upsertOrg({ name: name.replace(/\s*\(one-door route\)\s*/i, ""), website, domain: domainOf(website), parentKey: null,
+        const orgKey = upsertOrg({ name: name.replace(/\s*\(one-door route\)\s*/i, ""), website, domain: orgDomain(website, name), parentKey: null,
           location: v(r, "location") || null, country: null, notes: v(r, "personalization_notes") || null }, src, `co-m:${slug(name)}`);
         const ids = [...emailIdentities(`${v(r, "email")} ${v(r, "direct_email")}`, false, null), ...linkedin(v(r, "linkedin_url"))];
         const contactKey = upsertContact(orgKey, v(r, "contact_name") || null, v(r, "contact_role") || null, ids, src, name);
@@ -227,13 +229,13 @@ export function buildPlan(inp: Inputs): Plan {
       const name = v(r, "Name"); if (!name) continue;
       const src = ref(s, t!.name, r);
       const website = v(r, "Website") || null;
-      const orgKey = upsertOrg({ name, website, domain: domainOf(website), parentKey: null, location: v(r, "Geography") || null, country: null,
+      const orgKey = upsertOrg({ name, website, domain: orgDomain(website, name), parentKey: null, location: v(r, "Geography") || null, country: null,
         notes: v(r, "Description") || null }, src, `media:${slug(name)}`);
       const contactKey = upsertContact(orgKey, null, null, emailIdentities(v(r, "Email"), false, null), src, name);
       const oppKey = upsertOpp("media_pr", orgKey, contactKey, src, { category: v(r, "Category"), opportunity_type: v(r, "Opportunity type"),
         pricing: v(r, "Pricing / model"), rank: v(r, "Rank (1-5)"), priority: v(r, "Priority"), audience: v(r, "Audience (size + source of number)") },
         v(r, "Notes / next step") ? [v(r, "Notes / next step")] : []);
-      mediaNameOpp.set(lower(name), oppKey);
+      nameOpp.set(`media_pr|${lower(name)}`, oppKey);
     }
   }
 
@@ -244,7 +246,7 @@ export function buildPlan(inp: Inputs): Plan {
       const name = v(r, "name"); if (!name) continue;
       const src = ref(s, t!.name, r);
       const website = v(r, "website") || null;
-      const orgKey = upsertOrg({ name, website, domain: domainOf(website), parentKey: null, location: null, country: null, notes: v(r, "priority_reason") || null },
+      const orgKey = upsertOrg({ name, website, domain: orgDomain(website, name), parentKey: null, location: null, country: null, notes: v(r, "priority_reason") || null },
         src, `listing:${v(r, "partner_id") || slug(name)}`);
       const contactKey = upsertContact(orgKey, v(r, "contact_person") && v(r, "contact_person") !== "unknown" ? v(r, "contact_person") : null, null,
         emailIdentities(v(r, "contact_email"), false, null), src, name);
@@ -286,7 +288,7 @@ export function buildPlan(inp: Inputs): Plan {
         continue;
       }
       const website = v(r, "Website") || null;
-      const domain = domainOf(website);
+      const domain = orgDomain(website, name);
       const existingOrg = domain ? domainOrg.get(domain) : undefined;
       const orgKey = existingOrg ?? upsertOrg({ name, website, domain, parentKey: null, location: null, country: null, notes: v(r, "Reach / size") || null }, src, `index:${slug(name)}`);
       if (existingOrg) plan.orgs.get(existingOrg)!.sources.push(src);
@@ -337,8 +339,8 @@ export function buildPlan(inp: Inputs): Plan {
       if (!oppKey && channel === "listings") {
         const id = /^listing:(\d+)/.exec(partyKey)?.[1]; if (id && listingIdOpp.has(id)) { oppKey = listingIdOpp.get(id); matchedBy = "listing partner_id"; }
       }
-      if (!oppKey && channel === "media_pr" && mediaNameOpp.has(lower(company))) {
-        oppKey = mediaNameOpp.get(lower(company)); matchedBy = "identical outlet name (Media & PR)";
+      if (!oppKey && nameOpp.has(`${channel}|${lower(company)}`)) {
+        oppKey = nameOpp.get(`${channel}|${lower(company)}`); matchedBy = "identical name in the same channel";
       }
       if (!oppKey) {
         // Not in the channel inventory: create it from the ledger so the activity is not lost, and report it.
@@ -352,8 +354,8 @@ export function buildPlan(inp: Inputs): Plan {
       }
       const opp = plan.opps.get(oppKey)!;
       opp.matchedBy.push(matchedBy); opp.sources.push(src);
-      if (matchedBy.startsWith("identical outlet name")) {
-        plan.exceptions.push({ kind: "name_link", severity: "info", title: company, detail: "Ledger row linked to the Media & PR prospect by identical outlet name (no email on either side).", source: src });
+      if (matchedBy.startsWith("identical name")) {
+        plan.exceptions.push({ kind: "name_link", severity: "info", title: company, detail: "Outreach record linked to the prospect with the identical name in the same channel (no email to confirm).", source: src });
       }
 
       // Contact for messages
@@ -446,7 +448,7 @@ export function buildPlan(inp: Inputs): Plan {
     const s = inp.mediaPr; const t = tab(s, "Q4 Test Plan");
     for (const r of t?.rows ?? []) {
       const partner = v(r, "Partner"); if (!partner || /^(total|reserve)/i.test(partner)) continue;
-      const oppKey = mediaNameOpp.get(lower(partner));
+      const oppKey = nameOpp.get(`media_pr|${lower(partner)}`);
       const src = ref(s, t!.name, r);
       if (!oppKey) { plan.exceptions.push({ kind: "offer_unmatched", severity: "review", title: `Q4 Test Plan: ${partner}`, detail: "No Media & PR prospect with this exact name; offer not linked.", source: src }); continue; }
       const lean = Number(v(r, "Lean $10K"));
@@ -570,7 +572,8 @@ function deriveMilestone(channel: Channel, status: string): string | null {
 }
 
 function applyListingStatus(opp: PlanOpp, status: string, src: SourceRef) {
-  if (/^skipped|^on hold/i.test(status)) opp.disposition = "on_hold";
+  if (/badge required/i.test(status)) opp.disposition = "blocked";
+  else if (/^skipped|^on hold/i.test(status)) opp.disposition = "on_hold";
   else if (/^blocked|submit failed/i.test(status)) opp.disposition = "blocked";
   else if (/^rejected/i.test(status)) opp.disposition = "declined";
   void src;

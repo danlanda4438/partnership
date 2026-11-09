@@ -35,6 +35,16 @@ export function domainOf(urlOrDomain: string | undefined | null): string | null 
   return s;
 }
 
+/** Like domainOf, but keeps a platform's own domain for the platform itself (GigSalad → gigsalad.com). */
+export function orgDomain(website: string | undefined | null, name: string): string | null {
+  const d = domainOf(website);
+  if (d) return d;
+  let raw = lower(website).replace(/^[a-z]+:\/\//, "").replace(/^www\./, "").split(/[/?#\s;,]/)[0];
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(raw) || GENERIC_DOMAINS.has(raw)) return null;
+  const root = raw.split(".").slice(-2, -1)[0];
+  return root && root.length >= 4 && lower(name).replace(/[^a-z0-9]/g, "").includes(root.replace(/-/g, "")) ? (raw = raw.split(".").slice(-2).join(".")) : null;
+}
+
 export function emailDomain(email: string): string | null {
   return domainOf(email.split("@")[1]);
 }

@@ -19,6 +19,10 @@ const KIND_LABEL: Record<string, [string, string]> = {
   index_other_stream: ["Index partners outside the four workstreams", "Kept in the archive only."],
   excluded_impact: ["impact.com rows", "Excluded by design."],
   offer_unmatched: ["Offers that couldn't be linked to a partner", "Not imported until linked."],
+  verification_conflict: ["Verification contradicts a recorded send", "Both kept. Decide which is right."],
+  verification_task: ["Couldn't be verified: a check task will be created", "Stays “needs verification” until someone checks."],
+  verified_alias: ["Merged after verification", "The checker confirmed these are the same."],
+  verification_unrecognized: ["Verification status not understood", "Please clarify."],
 };
 
 export function renderReportHtml(r: Report): string {
@@ -57,6 +61,12 @@ ${channels.map((c) => { const l = r.ledger[c as keyof typeof r.ledger]; const t 
   return `<tr><td>${CH[c]}</td><td class="n">${cmp(l.contacted, t["Reached unique parties / workflows"])}</td><td class="n">${cmp(l.humanReplies, t["Human replies"])}</td><td class="n">${cmp(l.positiveFlags, t["Positive / positive outcomes"])}</td><td class="n">${l.automaticOnly}</td><td class="n">${l.bounced}</td></tr>`; }).join("")}
 </tbody></table></div>
 <p class="small muted">Affiliates' 12 positives are Instantly “Interested” labels. They're kept as labels, not counted as agreed deals. Media & PR positives mean a next step or offer, not approved spend. Listings positives are approvals, launches and one paid placement, none of them human replies.</p>
+
+${r.verification ? `<h2>Verification applied (agent check, 9 Nov)</h2>
+<div class="card"><p><strong>${r.verification.applied}</strong> prospects updated from the verification sheet. Each one gets a “verified 9 Nov” entry on its timeline with the checker's evidence.</p>
+<ul>${Object.entries(r.verification.changes).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<li>${esc(k)}: <strong>${n}</strong></li>`).join("")}</ul>
+${r.verification.merged.length ? `<p class="small">Merged: ${r.verification.merged.map(esc).join("; ")}</p>` : ""}
+${r.verification.unmatched.length ? `<p class="small warn">Not matched to a prospect: ${r.verification.unmatched.map((u) => esc(`${u.prospect} (${u.channel})`)).join(", ")}</p>` : `<p class="small ok">Every verified prospect was matched.</p>`}</div>` : ""}
 
 <h2>2. What will be created in the app</h2>
 <div class="grid">
