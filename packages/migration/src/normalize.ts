@@ -10,7 +10,7 @@
 //  * Drafts and connection-only actions are not contact. Platform labels stay labels.
 //  * No invented timestamps or recipients; unidentified historical markers are held.
 import { type Snapshot, type SnapshotRow, tab } from "./workbook";
-import { domainOf, emailDomain, emails, lower, norm, orgDomain, parseTime, slug, type ParsedTime } from "./util";
+import { blankIfPlaceholder, domainOf, emailDomain, emails, lower, norm, orgDomain, parseTime, slug, type ParsedTime } from "./util";
 
 export type Channel = "affiliates" | "co_marketing" | "media_pr" | "listings";
 export type Stage = "contacted" | "replied" | "interested" | "discussion_proposal" | "agreed" | "live";
@@ -98,7 +98,8 @@ export function buildPlan(inp: Inputs): Plan {
     return key;
   }
 
-  function upsertContact(orgKey: string, name: string | null, title: string | null, identities: PlanIdentity[], source: SourceRef, fallbackKey: string): string | null {
+  function upsertContact(orgKey: string, rawName: string | null, rawTitle: string | null, identities: PlanIdentity[], source: SourceRef, fallbackKey: string): string | null {
+    const name = blankIfPlaceholder(rawName); const title = blankIfPlaceholder(rawTitle);
     const verifiedEmail = identities.find((i) => i.kind === "email" && i.verified);
     const anyEmail = identities.find((i) => i.kind === "email");
     if (!name && !anyEmail) return null;
@@ -120,7 +121,7 @@ export function buildPlan(inp: Inputs): Plan {
       }
       return key;
     }
-    plan.contacts.set(key, { key, orgKey, name, title, identities: [...identities], sources: [source] });
+    plan.contacts.set(key, { key, orgKey, name: blankIfPlaceholder(name), title: blankIfPlaceholder(title), identities: [...identities], sources: [source] });
     for (const i of identities) if (i.kind === "email" && !emailOwner.has(i.normalized)) emailOwner.set(i.normalized, key);
     return key;
   }
@@ -393,7 +394,9 @@ export function buildPlan(inp: Inputs): Plan {
       const first = parseTime(v(r, "first_outreach"));
       const sentKey = `event:ledger:${partyKey}:sent`;
       plan.events.push({
-        key: sentKey, oppKey, eventType: channel === "listings" && provider === "contact_form" ? "listing.submitted" : "message.sent", time: first,
+        key: sentKey, oppKey, eventType: channel === "listings" && provider === "contact_form" ? "listing.submitted"
+          : provider === "contact_form" ? "contact_form.submitted" : provider === "linkedin" ? "linkedin.message_sent"
+          : provider === "facebook" ? "facebook.message_sent" : "message.sent", time: first,
         summary: `${method || "Outreach"} — ${status}`, source: src,
         message: { provider, providerMessageId: provider === "gmail" && /^[0-9a-f]{12,}$/i.test(gmailId) ? gmailId : null, threadId: null,
           direction: "outbound", status: bounced ? "bounced" : "sent", isAutomatic: null, from: null, to: email ? [email] : [],

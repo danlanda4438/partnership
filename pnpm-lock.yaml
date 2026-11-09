@@ -44,6 +44,9 @@ importers:
       '@gleeday/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@gleeday/migration':
+        specifier: workspace:*
+        version: link:../../packages/migration
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.6.7)

@@ -18,6 +18,7 @@ describe("identity helpers", () => {
 
 describe("parseTime never invents precision", () => {
   it("exact Jerusalem minutes", () => {
+    expect(parseTime("2026-11-01").at).toBe("2026-10-31T22:00:00.000Z");
     expect(parseTime("2026-11-05 22:37 Asia/Jerusalem")).toMatchObject({ at: "2026-11-05T20:37:00.000Z", precision: "minute", timezone: "Asia/Jerusalem" });
   });
   it("date-only values stay day precision", () => {

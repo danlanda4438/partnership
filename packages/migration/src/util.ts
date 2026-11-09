@@ -67,8 +67,15 @@ export function parseTime(raw: string | undefined | null): ParsedTime {
   const iso = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(r);
   if (iso && !(iso[2] === "00" && iso[3] === "00")) return { at: new Date(r).toISOString(), precision: "minute", timezone: "UTC", raw: r };
   const d = /^(\d{4}-\d{2}-\d{2})(?=$|[^0-9])/.exec(r);
-  if (d) return { at: zonedLocalToUtc(d[1], "12:00", "Asia/Jerusalem"), precision: "day", timezone: "Asia/Jerusalem", raw: r };
+  // Date only: stored at the start of the day so it sorts before timed events that day; shown as a date.
+  if (d) return { at: zonedLocalToUtc(d[1], "00:00", "Asia/Jerusalem"), precision: "day", timezone: "Asia/Jerusalem", raw: r };
   return { at: null, precision: "unknown", timezone: null, raw: r };
 }
+
+/** Spreadsheet placeholders that mean "no value". */
+export const blankIfPlaceholder = (s: string | undefined | null): string | null => {
+  const v = norm(s);
+  return !v || /^(not found|unknown|n\/a|na|none|-|—|tbd|\?)$/i.test(v) ? null : v;
+};
 
 export const slug = (s: string) => lower(s).normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);

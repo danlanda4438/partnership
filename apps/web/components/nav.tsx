@@ -26,6 +26,7 @@ const SECTIONS: { title?: string; links: { href: string; label: string }[] }[] =
     links: [
       { href: "/bots", label: "Bots" },
       { href: "/integrations", label: "Integrations & sources" },
+      { href: "/settings/import", label: "Import data" },
       { href: "/settings", label: "Settings" },
     ],
   },
@@ -33,7 +34,7 @@ const SECTIONS: { title?: string; links: { href: string; label: string }[] }[] =
 
 export function Nav({ counts }: { counts: { approvals: number; exceptions: number } }) {
   const path = usePathname();
-  const isActive = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`));
+  const isActive = (href: string) => (href === "/" ? path === "/" : href === "/settings" ? path === "/settings" : path === href || path.startsWith(`${href}/`));
   const badge = (href: string) =>
     href === "/approvals" && counts.approvals ? counts.approvals
     : href === "/exceptions" && counts.exceptions ? counts.exceptions

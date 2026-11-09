@@ -43,6 +43,17 @@ _Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server sett
 
 **Important:** the database tests use a local stand-in for Supabase's auth and storage (`supabase/tests/support/supabase_stub.sql`). Passing them shows the rules are correct. It does not show they are live on a real project.
 
+## Phase 2: Spreadsheet migration
+
+| Component | Built | Tested | Configured | Deployed | Notes |
+|---|---|---|---|---|---|
+| Migration package (snapshot, normalize, verify, report) | ✅ | ✅ unit + real files | — | — | Runs in the browser; spreadsheets never committed to git |
+| Dry run on the real 5 workbooks + agent verification | ✅ | ✅ | — | — | Reproduces the Nov 8 sheet totals exactly (209/14/12, 38/1/1, 36/17/16, 16/0/4) |
+| Import loader (`20261112000100`) | ✅ | ✅ db + real data | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261112000100_import.sql` |
+| Import page (Settings → Import data) | ✅ | ✅ browser, real files, 57 s | — | ❌ | Re-runs are idempotent; needs `SUPABASE_SECRET_KEY` on Vercel |
+| Real import into production | ❌ | — | — | — | **Owner action:** run the Import page with the 6 files |
+| Cutover (app becomes source of truth; sheets read-only) | ❌ | ❌ | ❌ | ❌ | Separate, approved step with backup and rollback |
+
 ## Phase 4: Bots, MCP and durable execution
 
 | Component | Built | Tested | Configured | Deployed | Notes |
