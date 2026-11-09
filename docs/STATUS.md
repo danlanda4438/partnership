@@ -56,9 +56,12 @@ _Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server sett
 | Routine notifications (outbox, retries, dead-letter) | ✅ | ✅ (fake routine) | ❌ | ❌ | Needs each routine's fire URL/token as server variables |
 | Scheduled maintenance (`/api/worker/maintenance`) | ✅ | ✅ db | ❌ | ❌ | Vercel Cron once a day (Hobby limit) + immediate dispatch after approvals and bot reports |
 | Bots page: add bot, channels, limits, pause, tokens, routine, connections, notifications | ✅ | ✅ browser | — | ❌ | |
-| Real authorized end-to-end task with an existing bot | ❌ | ❌ | ❌ | ❌ | **Blocked:** needs deployment + your bot list |
+| Coordinator + prospect tools, Grok webhook format (`20261111000100`) | ✅ | ✅ | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261111000100_coordinator_tools.sql` |
+| Your 5 Grok bots registered (`04_create_bots.sql`) | ✅ | ✅ (on a copy) | ❌ | ❌ | **Owner must run** after the update above |
+| Grok connectors + routines for the 5 bots | — | — | ❌ | ❌ | Steps in `docs/BOT_CONNECTION_GUIDE.md`; needs the deployed app and sign-in |
+| Real authorized end-to-end task with an existing bot | ❌ | ❌ | ❌ | ❌ | **Blocked:** needs deployment + sign-in |
 
-**Tests:** 121 database/MCP/OAuth tests + 5 unit tests, plus browser tests `tests/e2e/smoke.cjs` and `tests/e2e/bots.mjs`.
+**Tests:** 130 database/MCP/OAuth tests + 5 unit tests, plus browser tests `tests/e2e/smoke.cjs` and `tests/e2e/bots.mjs`.
 
 ## Upcoming phases
 
@@ -69,6 +72,9 @@ _Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server sett
 | 6 | Command Center adapter, cutover, end-to-end | Not started | Command Center owner's agreed contract |
 
 ## Decisions recorded
+
+- **Bots run on Grok Bot** (Soled = coordinator; affiliates, co-marketing, media & PR, listing). They connect through Grok custom connectors (OAuth, one per bot) and are woken by Grok routine webhooks. Grok's connectors may be account-wide, so each bot's instructions name its own connector, and the server limits each connector to its bot's scope.
+- **impact.com stays out of the app**, even though the bots use it elsewhere. Only manual affiliate milestones are recorded.
 
 - **Supabase project:** `Partnerships` (ref `ujtgbkilcownazwudtjt`, org Invitfull, region ap-southeast-2). Set up by the owner via the SQL Editor (`supabase/manual/`). No Supabase keys are held by the build sessions.
 
