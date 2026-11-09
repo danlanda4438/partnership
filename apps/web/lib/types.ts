@@ -206,6 +206,7 @@ export interface BotItem {
   capabilities: string[];
   max_concurrent_tasks: number;
   daily_action_budget: number | null;
+  routine_secret_ref: string | null;
   channels: string[];
   active_attempts: number;
   succeeded_7d: number;

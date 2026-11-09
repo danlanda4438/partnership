@@ -2,7 +2,7 @@
 
 Legend: **Built**: code exists · **Tested**: automated tests pass · **Configured**: real credentials or settings are in place · **Deployed**: running for real users · **Blocked**: waiting on an external dependency.
 
-_Last updated: 2026-11-09 (Phase 3 built; awaiting database update + deployment)._
+_Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server settings and your bots)._
 
 ## Phase 1: Foundation
 
@@ -43,12 +43,28 @@ _Last updated: 2026-11-09 (Phase 3 built; awaiting database update + deployment)
 
 **Important:** the database tests use a local stand-in for Supabase's auth and storage (`supabase/tests/support/supabase_stub.sql`). Passing them shows the rules are correct. It does not show they are live on a real project.
 
+## Phase 4: Bots, MCP and durable execution
+
+| Component | Built | Tested | Configured | Deployed | Notes |
+|---|---|---|---|---|---|
+| Worker execution layer (`20261110000100`) | ✅ | ✅ | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261110000100_worker_execution.sql` |
+| Connector OAuth tables (`20261110000200`) | ✅ | ✅ | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261110000200_oauth_connectors.sql` |
+| MCP server `/api/mcp` (13 tools, typed errors) | ✅ | ✅ real MCP client + real HTTP | ❌ | ❌ | Needs `SUPABASE_URL` + `SUPABASE_SECRET_KEY` as server-only Vercel variables |
+| Per-bot tokens (create once, revoke, expiry) | ✅ | ✅ db + browser | — | ❌ | |
+| claude.ai connector sign-in (OAuth 2.1, PKCE, rotation) | ✅ | ✅ db + browser + HTTP | — | ❌ | Not yet tried with a real claude.ai connector |
+| Approval → task lifecycle, single execution, daily limits | ✅ | ✅ | — | ❌ | |
+| Routine notifications (outbox, retries, dead-letter) | ✅ | ✅ (fake routine) | ❌ | ❌ | Needs each routine's fire URL/token as server variables |
+| Scheduled maintenance (`/api/worker/maintenance`) | ✅ | ✅ db | ❌ | ❌ | Vercel Cron once a day (Hobby limit) + immediate dispatch after approvals and bot reports |
+| Bots page: add bot, channels, limits, pause, tokens, routine, connections, notifications | ✅ | ✅ browser | — | ❌ | |
+| Real authorized end-to-end task with an existing bot | ❌ | ❌ | ❌ | ❌ | **Blocked:** needs deployment + your bot list |
+
+**Tests:** 121 database/MCP/OAuth tests + 5 unit tests, plus browser tests `tests/e2e/smoke.cjs` and `tests/e2e/bots.mjs`.
+
 ## Upcoming phases
 
 | Phase | Scope | Status | Blocked on |
 |---|---|---|---|
 | 2 | Spreadsheet snapshot → staging → reconciliation report | Not started | Read access to the 5 linked Google Sheets |
-| 4 | MCP server for bots, durable execution, webhook routines | Not started | List of actual bots/roles; where Soled runs |
 | 5 | Instantly sync; Gmail sends through bots' existing access with approval | Not started | Instantly API key and plan |
 | 6 | Command Center adapter, cutover, end-to-end | Not started | Command Center owner's agreed contract |
 

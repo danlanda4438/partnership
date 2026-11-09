@@ -2,7 +2,7 @@
 
 An independent operations app where **Soled coordinates the existing bot team**, bots do authorized work, and the owner handles **decisions, approvals and exceptions** across four workstreams: **Affiliates, Co-Marketing, Media & PR, Listings**.
 
-> **Current state: Phase 1 (foundation).** The database, security rules, login and an overview screen are built and tested locally. Nothing is deployed or connected yet. See [`docs/STATUS.md`](docs/STATUS.md) for exactly what is built, tested, configured, deployed or blocked.
+> **Current state: Phases 1, 3 and 4 built.** The database, operations screens and bot connection (MCP server, tokens, connector sign-in, routine notifications) are built and tested. Phase 2 (spreadsheet migration) waits on access to the sheets. See [`docs/STATUS.md`](docs/STATUS.md) for exactly what is built, tested, configured, deployed or blocked.
 
 ## How it works (plain language)
 
@@ -47,9 +47,10 @@ Tests need `TEST_DATABASE_ADMIN_URL` pointing at a local Postgres superuser (def
 - [`docs/STATUS.md`](docs/STATUS.md): built / tested / configured / deployed / blocked, per component
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): system ownership, layers, data model
 - [`docs/SECURITY.md`](docs/SECURITY.md): access model and review of every privileged function
-- [`docs/RUNBOOK.md`](docs/RUNBOOK.md): Supabase setup, migrations, first workspace, deployment
+- [`docs/RUNBOOK.md`](docs/RUNBOOK.md): Supabase setup, migrations, first workspace, deployment, server settings
+- [`docs/BOT_CONNECTION_GUIDE.md`](docs/BOT_CONNECTION_GUIDE.md): connecting your existing bots (connector or token), routines, MCP tool contract
 
-The bot-connection guide, integration limitations and Command Center adapter guide are written in the phases that build those parts (4–6).
+The integration limitations and Command Center adapter guide are written in the phases that build those parts (5–6).
 
 ## Hard boundaries
 

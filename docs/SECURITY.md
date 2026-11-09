@@ -25,6 +25,10 @@ Every `SECURITY DEFINER` function pins `search_path = ''` and schema-qualifies n
 | `set_worker_channels(worker, channels[])` | owner/admin | Worker must belong to the caller's workspace; channels resolved within that workspace |
 | `ui_members(workspace)` | any active member | Reads emails from `auth.users`, but only for workspaces the caller belongs to |
 
+| `create_worker`, `issue_worker_token`, `revoke_worker_token`, `ui_worker_tokens` | owner/admin | A token is returned once; only its sha256 is stored; listings never include tokens or hashes |
+| `oauth_client_info`, `oauth_authorize`, `ui_connectable_workers` | owner/admin (authorize) | Redirect URI must be registered; PKCE S256 required; binds the connector to one bot of the caller's workspace |
+| `ui_connector_grants`, `revoke_connector_grant` | owner/admin | Revoking a connection revokes all its tokens immediately |
+
 All other Phase 3 functions (`ui_*`, `workspace_metrics`, `record_activity`, `set_opportunity_*`, `set_worker_settings`, `save_notification_preferences`) are **SECURITY INVOKER**: they run with the caller's own permissions, so RLS and table triggers make every decision. None is executable by `anon`.
 
 ### Backend only (`private`, executable by `service_role` only)
@@ -37,6 +41,17 @@ All other Phase 3 functions (`ui_*`, `workspace_metrics`, `record_activity`, `se
 | `expire_leases()` | Sweeper | Returns expired tasks to queue or dead-letter |
 | `begin_approval_execution(id, hash, executor)` | Approved → executing, at most once | Status approved; unexpired; hash matches; approver **still** an active owner/admin |
 | `finish_approval_execution(id, outcome, evidence)` | Records executed/failed/uncertain | `uncertain` blocks re-execution until reconciled |
+
+### Bot API (service_role only, called by the MCP server)
+
+`worker_*`, `dispatch_*`, `run_maintenance`, `oauth_register_client`, `oauth_exchange_code`, `oauth_refresh`. A test fails if any is executable by `anon` or `authenticated`. The MCP server resolves the bot from its token hash (`worker_authenticate`) and passes that id. Tool arguments never choose the identity. Each function re-checks: bot active (not paused or revoked), workspace, channel scope, lease ownership, capability (`gmail.send` for sends), daily limit, and approval state and payload hash.
+
+### Bot tokens and connectors
+
+- Bot tokens are 256-bit random values (`gwk_…`). Only their sha256 is stored; they're shown once and can be revoked or expired.
+- Connector (OAuth) access tokens last 1 hour. Refresh tokens last 90 days and rotate on each use. Reusing an old refresh token or authorization code revokes the whole connection (theft signal).
+- Routine fire URLs and tokens are never stored in the database. A bot record holds only the *name* of the server variables (`<REF>_URL`, `<REF>_TOKEN`).
+- Notifications carry only an event name and ids. The routine receives them as untrusted data.
 
 ### Internal helpers (not API-callable)
 

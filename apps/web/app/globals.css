@@ -205,3 +205,4 @@ button.link { background: none; color: var(--accent); padding: 0; font-weight: 5
 details summary { cursor: pointer; }
 input[type="email"] { padding: 10px 12px; }
 form.stack-login { display: grid; gap: 10px; max-width: 360px; }
+pre.token { font-family: ui-monospace, Menlo, monospace; font-size: 13px; user-select: all; }

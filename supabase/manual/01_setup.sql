@@ -3392,6 +3392,32 @@ begin
 end;
 $$;
 
+-- Bot list now includes the routine reference (the secret's name, never its value).
+create or replace function public.ui_bots(p_workspace_id uuid)
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+      'id', w.id, 'name', w.name, 'role', w.role, 'description', w.description, 'status', w.status,
+      'capabilities', w.capabilities, 'max_concurrent_tasks', w.max_concurrent_tasks,
+      'daily_action_budget', w.daily_action_budget, 'routine_secret_ref', w.routine_secret_ref,
+      'channels', coalesce((select jsonb_agg(c.kind order by c.kind) from public.worker_channel_scopes s
+                            join public.channels c on c.id = s.channel_id where s.worker_id = w.id), '[]'::jsonb),
+      'active_attempts', (select count(*) from public.task_attempts a where a.worker_id = w.id and a.status = 'active'),
+      'succeeded_7d', (select count(*) from public.task_attempts a where a.worker_id = w.id and a.status = 'succeeded'
+                       and a.finished_at > now() - interval '7 days'),
+      'failed_7d', (select count(*) from public.task_attempts a where a.worker_id = w.id and a.status in ('failed', 'expired')
+                    and a.finished_at > now() - interval '7 days'),
+      'blocked_7d', (select count(*) from public.task_attempts a where a.worker_id = w.id and a.status = 'blocked'
+                     and a.finished_at > now() - interval '7 days'),
+      'last_seen_at', (select max(a.heartbeat_at) from public.task_attempts a where a.worker_id = w.id))
+    order by w.name), '[]'::jsonb)
+  from public.worker_identities w
+  where w.workspace_id = p_workspace_id;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Privileges
 -- ---------------------------------------------------------------------------

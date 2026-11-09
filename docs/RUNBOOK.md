@@ -75,6 +75,21 @@ pnpm dev
 - Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` only.
 - After deploying, update the Supabase Site URL and redirect URL (step 1.3).
 
+## 5b. Server settings for bots (Phase 4)
+
+In Vercel → Project → Settings → Environment Variables, add these as **server variables**, never with a `NEXT_PUBLIC_` prefix:
+
+| Variable | Value |
+|---|---|
+| `SUPABASE_URL` | `https://<ref>.supabase.co` |
+| `SUPABASE_SECRET_KEY` | Supabase → Project Settings → API Keys → **secret** key |
+| `CRON_SECRET` | A long random string. Vercel Cron sends it to `/api/worker/maintenance` |
+| `<REF>_URL`, `<REF>_TOKEN` | Per bot routine (see `docs/BOT_CONNECTION_GUIDE.md`) |
+
+`apps/web/vercel.json` runs maintenance once a day, the most the Vercel Hobby plan allows. Notifications are also sent right after each approval decision and each bot report. For faster lease expiry on Pro, change the schedule to `*/5 * * * *`.
+
+The Supabase redirect URL list also needs `https://<app>/auth/confirm**` (with the wildcard), so that sign-in from the connector consent page returns there.
+
 ## 6. Local development with demo data
 
 Needs a local Postgres. This builds a throwaway database with fictional demo data (`supabase/dev/seed_demo.sql`) and starts the app signed in as a demo owner, with no Supabase involved:
