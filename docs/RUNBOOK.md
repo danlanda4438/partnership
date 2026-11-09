@@ -47,6 +47,10 @@ where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity;
 
 The query must return no rows.
 
+### Applying later updates
+
+Each new migration also gets a ready-to-paste file in `supabase/manual/updates/`. Paste it into SQL Editor → New query → Run. Each file runs all-or-nothing, refuses to run twice, and refuses to run before the earlier updates. Then run `02_verify.sql` again.
+
 ## 3. Bootstrap the first workspace
 
 Run from a trusted machine. This sends no email.
@@ -71,7 +75,23 @@ pnpm dev
 - Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` only.
 - After deploying, update the Supabase Site URL and redirect URL (step 1.3).
 
-## 6. Running tests locally
+## 6. Local development with demo data
+
+Needs a local Postgres. This builds a throwaway database with fictional demo data (`supabase/dev/seed_demo.sql`) and starts the app signed in as a demo owner, with no Supabase involved:
+
+```bash
+LOCAL_PG=postgres://postgres@localhost:5432 tools/dev/local-demo.sh
+```
+
+Then, in another terminal, run the browser smoke test:
+
+```bash
+node tests/e2e/smoke.cjs /tmp/screens
+```
+
+The local data mode only activates under `next dev` with `GLEEDAY_LOCAL_DB_URL` set. It cannot run in a production build.
+
+## 7. Running tests locally
 
 Tests need a local PostgreSQL superuser. Each run creates a fresh database, loads the Supabase stub plus all migrations, runs the suite and drops the database.
 

@@ -22,6 +22,10 @@ Every `SECURITY DEFINER` function pins `search_path = ''` and schema-qualifies n
 | `set_member_role(member_id, role, status)` | owner/admin of that workspace | Only owners grant or remove owner; the last owner cannot be removed or demoted |
 | `decide_approval(id, approve/reject, payload_hash, note)` | owner/admin | Must be pending and unexpired; the caller must supply the hash of the exact payload they reviewed |
 | `cancel_task(id, reason)` | owner/admin | Cancels active attempts, so their leases stop working |
+| `set_worker_channels(worker, channels[])` | owner/admin | Worker must belong to the caller's workspace; channels resolved within that workspace |
+| `ui_members(workspace)` | any active member | Reads emails from `auth.users`, but only for workspaces the caller belongs to |
+
+All other Phase 3 functions (`ui_*`, `workspace_metrics`, `record_activity`, `set_opportunity_*`, `set_worker_settings`, `save_notification_preferences`) are **SECURITY INVOKER**: they run with the caller's own permissions, so RLS and table triggers make every decision. None is executable by `anon`.
 
 ### Backend only (`private`, executable by `service_role` only)
 

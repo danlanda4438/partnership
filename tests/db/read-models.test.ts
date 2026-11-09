@@ -118,7 +118,7 @@ describe("read models", () => {
     }
     const items = await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId]);
     const kinds = items.map((i: any) => i.kind).sort();
-    expect(kinds).toEqual(["campaign_error", "identity_ambiguous", "identity_ambiguous", "opportunity_needs_verification", "task_blocked"]);
+    expect(kinds).toEqual(["campaign_error", "identity_ambiguous", "opportunity_needs_verification", "task_blocked"]);
   });
 
   it("the daily view shows pending approvals, due work and changes, but not plain notes", async () => {
@@ -144,5 +144,17 @@ describe("read models", () => {
     const mine = await json(a.ownerId, "select public.ui_members($1) as r", [a.workspaceId]);
     expect(mine).toHaveLength(1);
     expect(mine[0]).toMatchObject({ role: "owner", is_you: true });
+  });
+});
+
+describe("bot administration", () => {
+  it("only owners/admins can pause a bot or change its limits", async () => {
+    const ws = await createWorkspace();
+    const member = await addMember(ws.workspaceId, "member");
+    const bot = await createWorker(ws.workspaceId);
+    await expectPgError(asUser(member, (q) => q("select public.set_worker_settings($1, 'paused', 1, 10)", [bot])), "not authorized");
+    await asUser(ws.ownerId, (q) => q("select public.set_worker_settings($1, 'paused', 2, 25)", [bot]));
+    const { rows } = await admin("select status, max_concurrent_tasks, daily_action_budget from public.worker_identities where id = $1", [bot]);
+    expect(rows[0]).toEqual({ status: "paused", max_concurrent_tasks: 2, daily_action_budget: 25 });
   });
 });

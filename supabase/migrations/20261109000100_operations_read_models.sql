@@ -4,6 +4,17 @@
 -- so Row Level Security of the calling user applies to everything it reads or writes.
 -- The web app reads through these functions, which keeps screen logic testable in SQL.
 
+-- Give unnamed Phase 1 constraints names that explain themselves in error messages.
+alter table public.opportunities rename constraint opportunities_check to opportunities_stage_requires_evidence;
+alter table public.opportunities rename constraint opportunities_check1 to opportunities_single_owner;
+
+create function private.label(p text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$ select replace(p, '_', ' ') $$;
+
 -- ---------------------------------------------------------------------------
 -- Audit: stage / disposition / milestone changes become timeline events.
 -- ---------------------------------------------------------------------------
@@ -18,7 +29,7 @@ begin
                                         occurred_at, occurred_at_precision, summary, evidence)
     values (new.workspace_id, new.id, new.organization_id, 'opportunity.stage_changed', 'app', 'system',
             now(), 'exact',
-            'Stage: ' || coalesce(old.stage::text, 'not contacted') || ' → ' || coalesce(new.stage::text, 'not contacted'),
+            'Stage: ' || coalesce(private.label(old.stage::text), 'not contacted') || ' → ' || coalesce(private.label(new.stage::text), 'not contacted'),
             jsonb_build_object('from', old.stage, 'to', new.stage, 'evidence_event_id', new.stage_evidence_event_id));
   end if;
   if new.disposition is distinct from old.disposition then
@@ -26,7 +37,7 @@ begin
                                         occurred_at, occurred_at_precision, summary, evidence)
     values (new.workspace_id, new.id, new.organization_id, 'opportunity.disposition_changed', 'app', 'system',
             now(), 'exact',
-            'Disposition: ' || coalesce(old.disposition::text, 'none') || ' → ' || coalesce(new.disposition::text, 'none'),
+            'Disposition: ' || coalesce(private.label(old.disposition::text), 'none') || ' → ' || coalesce(private.label(new.disposition::text), 'none'),
             jsonb_build_object('from', old.disposition, 'to', new.disposition));
   end if;
   if new.milestone_key is distinct from old.milestone_key then
@@ -34,7 +45,7 @@ begin
                                         occurred_at, occurred_at_precision, summary, evidence)
     values (new.workspace_id, new.id, new.organization_id, 'opportunity.milestone_changed', 'app', 'system',
             now(), 'exact',
-            'Milestone: ' || coalesce(old.milestone_key, 'none') || ' → ' || coalesce(new.milestone_key, 'none'),
+            'Milestone: ' || coalesce(private.label(old.milestone_key), 'none') || ' → ' || coalesce(private.label(new.milestone_key), 'none'),
             jsonb_build_object('from', old.milestone_key, 'to', new.milestone_key));
   end if;
   return null;
@@ -460,14 +471,16 @@ as $$
       'opportunity_id', null, 'link', '/integrations')
     from public.integration_connections ic where ic.workspace_id = p_workspace_id and ic.status in ('degraded', 'blocked', 'revoked')
     union all
-    select jsonb_build_object('kind', 'identity_ambiguous', 'id', ci.id, 'title', ci.value,
-      'detail', 'Unverified identity also claimed by another contact — review before merging', 'since', ci.created_at,
-      'opportunity_id', null, 'link', null)
+    select jsonb_build_object('kind', 'identity_ambiguous', 'id', min(ci.id::text), 'title', min(ci.value),
+      'detail', 'Claimed by ' || count(distinct ci.contact_id) || ' different contacts and not verified — review before merging',
+      'since', max(ci.created_at), 'opportunity_id', null, 'link', null)
     from public.contact_identities ci
-    where ci.workspace_id = p_workspace_id and not ci.is_verified
+    where ci.workspace_id = p_workspace_id
       and exists (select 1 from public.contact_identities o2
                   where o2.workspace_id = ci.workspace_id and o2.kind = ci.kind
                     and o2.normalized_value = ci.normalized_value and o2.contact_id <> ci.contact_id)
+    group by ci.kind, ci.normalized_value
+    having bool_or(not ci.is_verified)
   ) s;
 $$;
 
@@ -766,6 +779,28 @@ begin
 end;
 $$;
 
+-- Admin: pause/resume a bot and set its limits (administrative pause / backpressure).
+-- SECURITY INVOKER: the worker_identities admin-only UPDATE policy decides.
+create function public.set_worker_settings(
+  p_worker_id uuid,
+  p_status public.worker_status,
+  p_max_concurrent_tasks integer,
+  p_daily_action_budget integer
+)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  update public.worker_identities
+     set status = p_status, max_concurrent_tasks = p_max_concurrent_tasks, daily_action_budget = p_daily_action_budget
+   where id = p_worker_id;
+  if not found then
+    raise exception 'worker not found or not authorized' using errcode = 'insufficient_privilege';
+  end if;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Function privileges: never anon; signed-in users only.
 -- ---------------------------------------------------------------------------
@@ -792,7 +827,8 @@ begin
     'public.set_opportunity_status(uuid, public.opportunity_disposition, text)',
     'public.set_opportunity_plan(uuid, text, timestamptz, uuid, uuid)',
     'public.save_notification_preferences(uuid, public.digest_cadence, time, smallint, boolean, boolean, boolean)',
-    'public.set_worker_channels(uuid, public.channel_kind[])'
+    'public.set_worker_channels(uuid, public.channel_kind[])',
+    'public.set_worker_settings(uuid, public.worker_status, integer, integer)'
   ] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
