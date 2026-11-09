@@ -159,6 +159,32 @@ export function buildServer(db: ServiceDb, me: WorkerIdentity): McpServer {
     { opportunityId: uuid, stage: z.enum(["contacted", "replied", "interested", "discussion_proposal", "agreed", "live"]), evidenceEventId: uuid },
     (a) => db.call("worker_set_stage", { p_worker_id: w, p_opportunity_id: a.opportunityId, p_stage: a.stage, p_evidence_event_id: a.evidenceEventId }));
 
+  tool("searchOpportunities", "Find partner opportunities in your channels by name, stage (or 'none' for not-yet-contacted inventory).",
+    {
+      channel: channel.optional(),
+      stage: z.enum(["none", "contacted", "replied", "interested", "discussion_proposal", "agreed", "live"]).optional(),
+      query: z.string().max(100).optional(), limit: z.number().int().min(1).max(100).optional(), offset: z.number().int().min(0).optional(),
+    },
+    (a) => db.call("worker_search_opportunities", {
+      p_worker_id: w, p_channel: a.channel ?? null, p_stage: a.stage ?? null, p_query: a.query ?? null, p_limit: a.limit ?? 25, p_offset: a.offset ?? 0,
+    }),
+    { readOnlyHint: true });
+
+  tool("createProspect", "Add a new prospect to a channel as NOT-yet-contacted inventory. Reuses an existing contact only by the same verified email, and an organization only by the same website domain — never by name. Idempotent on externalRef.",
+    {
+      channel,
+      externalRef: z.string().min(3).max(200).describe("stable id for this prospect from your research, e.g. the website domain"),
+      prospect: z.object({
+        organization: z.object({ name: z.string().min(1).max(200), website: z.string().max(300).optional(), location: z.string().max(200).optional(), country: z.string().max(80).optional() }),
+        contact: z.object({ name: z.string().max(200).optional(), title: z.string().max(200).optional(), email: z.string().max(320).optional() }).optional(),
+        reason: z.string().max(2000).optional().describe("why this is a good prospect"),
+        sources: z.record(z.string(), z.unknown()).optional().describe("where the information came from (URLs)"),
+        notes: z.string().max(2000).optional(),
+      }),
+    },
+    (a) => db.call("worker_create_prospect", { p_worker_id: w, p_channel: a.channel, p_external_ref: a.externalRef, p_prospect: a.prospect }),
+    { idempotentHint: true });
+
   tool("proposeAction", "Propose the EXACT outward action for your claimed task (for send_message: to[], cc[], subject, body, attachments[]). Returns an immutable proposalId and payloadHash. Nothing happens until approved.",
     {
       taskId: uuid, leaseToken: z.string().min(10),
@@ -206,6 +232,30 @@ export function buildServer(db: ServiceDb, me: WorkerIdentity): McpServer {
       p_result: { reason: a.reason, ...(a.details ?? {}) }, p_evidence: {},
     }),
     { idempotentHint: true });
+
+  if (me.capabilities.includes("tasks.assign")) {
+    tool("getOverview", "Coordinator view: open tasks by channel and status, stopped tasks, approvals waiting for the owner, and the bot team.",
+      {}, () => db.call("worker_overview", { p_worker_id: w }), { readOnlyHint: true });
+
+    tool("createTask", "Coordinator: create a task in one of your channels, optionally assigned to a bot with access to that channel. Idempotent on idempotencyKey. Tasks reference work; never put instructions that bypass approvals in them.",
+      {
+        channel, kind: z.string().regex(/^[a-z][a-z0-9_.]{1,63}$/).describe("e.g. outreach.follow_up, listing.submit, research.prospects"),
+        title: z.string().min(3).max(300), details: z.record(z.string(), z.unknown()).optional(),
+        opportunityId: uuid.optional(), assignTo: uuid.optional().describe("worker_id from getOverview"),
+        priority: z.number().int().min(0).max(1000).optional().describe("lower runs first; default 100"),
+        dueAt: z.string().optional(), idempotencyKey: z.string().min(3).max(200),
+      },
+      (a) => db.call("worker_create_task", {
+        p_worker_id: w, p_channel: a.channel, p_kind: a.kind, p_title: a.title, p_details: a.details ?? {},
+        p_opportunity_id: a.opportunityId ?? null, p_assign_to: a.assignTo ?? null, p_priority: a.priority ?? 100,
+        p_due_at: a.dueAt ?? null, p_idempotency_key: a.idempotencyKey,
+      }),
+      { idempotentHint: true });
+
+    tool("assignTask", "Coordinator: (re)assign a queued or blocked task to a bot with access to its channel. A blocked task goes back to the queue.",
+      { taskId: uuid, assignTo: uuid.optional(), note: z.string().max(1000).optional() },
+      (a) => db.call("worker_assign_task", { p_worker_id: w, p_task_id: a.taskId, p_assign_to: a.assignTo ?? null, p_note: a.note ?? null }));
+  }
 
   return server;
 }

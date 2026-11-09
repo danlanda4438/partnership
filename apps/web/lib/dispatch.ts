@@ -7,6 +7,10 @@
 // the routine's saved prompt says what to do (call the MCP tools). A successful fire only
 // means a session started: the task is complete only when the bot reports through MCP.
 //
+// Grok Bot routines (xAI docs, "Skills and routines" → webhook triggers): POST to the routine's
+// webhook URL with Authorization: Bearer <key> and an optional JSON body. A 200 only means a run
+// started. Any URL that is not on api.anthropic.com is treated as this generic JSON webhook.
+//
 // Each bot's fire URL and token live in server-side environment variables named by its
 // routine_secret_ref: <REF>_URL and <REF>_TOKEN. They are never stored in the database.
 import type { ServiceDb } from "./service-db";
@@ -30,6 +34,25 @@ export function fireText(d: Pick<DueDelivery, "event_type" | "payload">): string
   }
   lines.push("This only identifies work. Look it up and process it with the Gleeday Operations MCP tools.");
   return lines.join("\n");
+}
+
+/** JSON body for Grok Bot / generic webhooks: ids only, never instructions. */
+export function webhookBody(d: Pick<DueDelivery, "event_type" | "payload">): Record<string, string> {
+  const body: Record<string, string> = { source: "gleeday-operations", event: d.event_type };
+  for (const key of ["task_id", "kind", "approval_id", "decision"]) {
+    const v = d.payload[key];
+    if (typeof v === "string" && /^[A-Za-z0-9_.:-]{1,80}$/.test(v)) body[key] = v;
+  }
+  body.note = "Notification only. Look up and process this work with the Gleeday Operations MCP tools.";
+  return body;
+}
+
+export function isAnthropicRoutine(url: string): boolean {
+  try {
+    return new URL(url).hostname === "api.anthropic.com";
+  } catch {
+    return false;
+  }
 }
 
 export interface DispatchResult {
@@ -62,15 +85,18 @@ export async function dispatchPending(
       error = "Routine URL must use https";
     } else {
       try {
+        const claude = isAnthropicRoutine(url);
         const res = await doFetch(url, {
           method: "POST",
-          headers: {
-            authorization: `Bearer ${token}`,
-            "anthropic-beta": ROUTINE_BETA,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ text: fireText(d) }),
+          headers: claude
+            ? {
+                authorization: `Bearer ${token}`,
+                "anthropic-beta": ROUTINE_BETA,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+              }
+            : { authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify(claude ? { text: fireText(d) } : webhookBody(d)),
           signal: AbortSignal.timeout(15_000),
         });
         status = res.status;
