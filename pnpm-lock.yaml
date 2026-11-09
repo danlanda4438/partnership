@@ -95,6 +95,9 @@ importers:
       exceljs:
         specifier: ^4.4.0
         version: 4.4.0
+      js-sha256:
+        specifier: ^1.0.0
+        version: 1.0.0
     devDependencies:
       '@types/node':
         specifier: ^26.6.6
@@ -1302,6 +1305,9 @@ packages:
 
   jose@6.2.16:
     resolution: {integrity: sha512-4LSJpbuBuPdGrONCdZUy0xnxtLf8eEz+EY0SMXdHQEBU7bgUHDVblU/JAjryv3wID9/LK7/YuwFwq+AQNfMscQ==}
+
+  js-sha256@1.0.0:
+    resolution: {integrity: sha512-Bqxf6ENUzYIMzuELCmRNrJOVbjKH1oMgbfYJBKVr/W1Xf9fazpahqCbb24v1pR7XV1isuqhM+w9KWpK7zCyUQw==}
 
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
@@ -3231,6 +3237,8 @@ snapshots:
   isexe@2.0.0: {}
 
   jose@6.2.16: {}
+
+  js-sha256@1.0.0: {}
 
   json-schema-traverse@1.0.0: {}
 

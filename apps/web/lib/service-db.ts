@@ -71,7 +71,9 @@ export async function localServiceDb(connectionString: string): Promise<ServiceD
         wrap(callExpr),
         keys.map((k) => {
           const v = args[k];
-          return v !== null && typeof v === "object" && !Array.isArray(v) ? JSON.stringify(v) : v;
+          // JSON objects, and arrays of objects (jsonb), are sent as JSON text; plain arrays stay Postgres arrays.
+          const isJson = v !== null && typeof v === "object" && (!Array.isArray(v) || v.some((x) => x !== null && typeof x === "object"));
+          return isJson ? JSON.stringify(v) : v;
         }),
       );
       await client.query("commit");

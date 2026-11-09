@@ -18,7 +18,7 @@ export type Disposition = "declined" | "on_hold" | "bounced" | "automatic_only" 
 
 export interface SourceRef { file: string; tab: string; row: number }
 
-export interface PlanOrg { key: string; name: string; website: string | null; domain: string | null; parentKey: string | null; location: string | null; country: string | null; notes: string | null; sources: SourceRef[] }
+export interface PlanOrg { key: string; name: string; website: string | null; domain: string | null; parentKey: string | null; location: string | null; country: string | null; notes: string | null; sources: SourceRef[]; aliases?: { alias: string; justification: string }[] }
 export interface PlanIdentity { kind: "email" | "linkedin" | "website" | "phone"; value: string; normalized: string; verified: boolean; verificationSource: string | null }
 export interface PlanContact { key: string; orgKey: string; name: string | null; title: string | null; identities: PlanIdentity[]; sources: SourceRef[] }
 export interface PlanOpp {
@@ -86,6 +86,8 @@ export function buildPlan(inp: Inputs): Plan {
       existing.sources.push(source);
       existing.website ??= o.website; existing.location ??= o.location; existing.country ??= o.country;
       if (existing.name !== o.name && o.domain) {
+        existing.aliases ??= [];
+        if (!existing.aliases.some((a) => a.alias === o.name)) existing.aliases.push({ alias: o.name, justification: `Same website domain ${o.domain}` });
         plan.exceptions.push({ kind: "org_alias", severity: "info", title: `${existing.name} = ${o.name}`,
           detail: `Same website domain ${o.domain}; treated as one organization (justified alias).`, source });
       }

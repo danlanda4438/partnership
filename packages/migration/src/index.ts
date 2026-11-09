@@ -4,3 +4,4 @@ export * from "./report";
 export * from "./util";
 export * from "./render";
 export * from "./verification";
+export * from "./payload";

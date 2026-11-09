@@ -1,7 +1,7 @@
 // Immutable snapshot of a workbook: every tab, every populated row, with the displayed values,
 // archived formulas (as text — never executed), hyperlink destinations, cell notes and checksums.
-import { createHash } from "node:crypto";
 import ExcelJS from "exceljs";
+import { sha256 } from "js-sha256";
 
 export interface SnapshotLink { column: string; text: string | null; url: string }
 export interface SnapshotRow {
@@ -20,7 +20,8 @@ export interface Snapshot {
   tabs: SnapshotTab[];
 }
 
-const sha = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
+// Pure-JS hashing so this runs in the browser as well as on a server.
+const sha = (s: string | ArrayBuffer | Uint8Array) => sha256(s);
 
 function cellText(v: ExcelJS.CellValue): string {
   if (v === null || v === undefined) return "";
@@ -55,7 +56,7 @@ export function columnLetter(n: number): string {
   return s;
 }
 
-export async function readWorkbook(buffer: Buffer | ArrayBuffer, fileName: string, capturedAt = new Date().toISOString()): Promise<Snapshot> {
+export async function readWorkbook(buffer: ArrayBuffer | Uint8Array, fileName: string, capturedAt = new Date().toISOString()): Promise<Snapshot> {
   const wb = new ExcelJS.Workbook();
   // exceljs typings expect a Node Buffer; both inputs are accepted at runtime.
   await wb.xlsx.load(buffer as unknown as ArrayBuffer);
@@ -90,8 +91,7 @@ export async function readWorkbook(buffer: Buffer | ArrayBuffer, fileName: strin
     });
     tabs.push({ name: ws.name, state: ws.state ?? "visible", header, rows });
   });
-  const bytes = buffer instanceof ArrayBuffer ? Buffer.from(buffer) : buffer;
-  return { fileName, fileSha256: sha(bytes), capturedAt, tabs };
+  return { fileName, fileSha256: sha(buffer), capturedAt, tabs };
 }
 
 export function tab(snapshot: Snapshot, name: string): SnapshotTab | undefined {

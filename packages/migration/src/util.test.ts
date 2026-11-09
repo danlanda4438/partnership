@@ -34,3 +34,12 @@ describe("date cells", () => {
     expect(parseTime("2026-10-28T00:00:00.000Z").precision).toBe("day");
   });
 });
+
+import { clean } from "./payload";
+describe("payload cleaning", () => {
+  it("replaces half emojis so the database accepts the JSON", () => {
+    const cut = "party 🎉".slice(0, 7);
+    expect(clean({ s: cut }).s).toBe("party �");
+    expect(clean({ s: "ok 🎉" }).s).toBe("ok 🎉");
+  });
+});
