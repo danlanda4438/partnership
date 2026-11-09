@@ -25,8 +25,13 @@ function localMode(): boolean {
 
 let cached: ServiceDb | null = null;
 
+/** The project URL is not secret: reuse the public one when SUPABASE_URL isn't set separately. */
+function supabaseUrl(): string | undefined {
+  return process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+}
+
 export function serviceConfigured(): boolean {
-  return localMode() || (!!process.env.SUPABASE_URL && !!process.env.SUPABASE_SECRET_KEY);
+  return localMode() || (!!supabaseUrl() && !!process.env.SUPABASE_SECRET_KEY);
 }
 
 export async function getServiceDb(): Promise<ServiceDb> {
@@ -35,9 +40,9 @@ export async function getServiceDb(): Promise<ServiceDb> {
     cached = await localServiceDb(process.env.GLEEDAY_LOCAL_DB_URL as string);
     return cached;
   }
-  const url = process.env.SUPABASE_URL;
+  const url = supabaseUrl();
   const key = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !key) throw new ServiceDbError("Server is not configured (SUPABASE_URL / SUPABASE_SECRET_KEY)", "not_configured");
+  if (!url || !key) throw new ServiceDbError("Server is not configured (SUPABASE_SECRET_KEY)", "not_configured");
   const client: SupabaseClient = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   cached = {
     async call<T>(fn: string, args: Record<string, unknown> = {}) {

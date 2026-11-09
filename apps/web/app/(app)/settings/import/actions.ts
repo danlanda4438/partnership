@@ -11,7 +11,9 @@ export interface ActionResult<T> { ok: boolean; data?: T; error?: string }
 async function guard() {
   const { db, workspace } = await getContext();
   if (!workspace || !canAdmin(workspace.role)) throw new Error("Only owners and admins can import data.");
-  if (!serviceConfigured()) throw new Error("The server isn't configured for imports yet (SUPABASE_URL / SUPABASE_SECRET_KEY).");
+  if (!serviceConfigured()) {
+    throw new Error("The server can't see SUPABASE_SECRET_KEY. In Vercel → Settings → Environment Variables, check it exists for the Production environment, then redeploy.");
+  }
   return { userId: db.userId, workspaceId: workspace.id, service: await getServiceDb() };
 }
 
