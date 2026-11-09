@@ -14,10 +14,15 @@ export async function sendLoginLink(formData: FormData) {
   const next = String(formData.get("next") ?? "");
   const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "";
   // Invite-only: never creates new accounts from the login form.
-  await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signInWithOtp({
     email,
     options: { shouldCreateUser: false, emailRedirectTo: `${origin}/auth/confirm${safeNext ? `?next=${encodeURIComponent(safeNext)}` : ""}` },
   });
+  if (error) {
+    // Server log only (Vercel → Logs), for diagnosing delivery problems. The address is masked.
+    const masked = email.replace(/^(.).*(@.*)$/, "$1***$2");
+    console.error(`[login] sign-in email not sent to ${masked}: ${error.status ?? ""} ${error.code ?? ""} ${error.message}`);
+  }
   // Same response whether or not the address has access (no account enumeration).
   redirect("/login?sent=1");
 }
