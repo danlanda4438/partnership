@@ -26,7 +26,7 @@ _Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server sett
 
 | Component | Built | Tested | Configured | Deployed | Notes |
 |---|---|---|---|---|---|
-| Read models + metrics functions (`20261109000100`) | ✅ | ✅ | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261109000100_operations_read_models.sql` |
+| Read models + metrics functions (`20261109000100`) | ✅ | ✅ | ✅ | ✅ | Applied to `Partnerships` project |
 | Today (daily owner view) | ✅ | ✅ browser | — | ❌ | Approvals, exceptions, due actions, changes grouped by partner |
 | Metrics | ✅ | ✅ db + browser | — | ❌ | Separate contacts / organizations / opportunities / messages; de-duplicated totals; periods; freshness |
 | Four pipelines | ✅ | ✅ browser | — | ❌ | Stage columns, inventory outside the funnel, search, declined/bounced toggle |
@@ -47,8 +47,8 @@ _Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server sett
 
 | Component | Built | Tested | Configured | Deployed | Notes |
 |---|---|---|---|---|---|
-| Worker execution layer (`20261110000100`) | ✅ | ✅ | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261110000100_worker_execution.sql` |
-| Connector OAuth tables (`20261110000200`) | ✅ | ✅ | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261110000200_oauth_connectors.sql` |
+| Worker execution layer (`20261110000100`) | ✅ | ✅ | ✅ | ✅ | Applied to `Partnerships` project; verification all OK |
+| Connector OAuth tables (`20261110000200`) | ✅ | ✅ | ✅ | ✅ | Applied to `Partnerships` project; verification all OK |
 | MCP server `/api/mcp` (13 tools, typed errors) | ✅ | ✅ real MCP client + real HTTP | ❌ | ❌ | Needs `SUPABASE_URL` + `SUPABASE_SECRET_KEY` as server-only Vercel variables |
 | Per-bot tokens (create once, revoke, expiry) | ✅ | ✅ db + browser | — | ❌ | |
 | claude.ai connector sign-in (OAuth 2.1, PKCE, rotation) | ✅ | ✅ db + browser + HTTP | — | ❌ | Not yet tried with a real claude.ai connector |
