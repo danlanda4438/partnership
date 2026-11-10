@@ -208,6 +208,19 @@ describe("propose → approve → execute once → report", () => {
     expect(done.status).toBe("succeeded");
   });
 
+  it("a task can't be reported done while its proposal waits for approval or was never carried out", async () => {
+    const { ws, w, t, lease, prop } = await setup();
+    // The live-test failure: propose, skip requestApproval, claim success.
+    await expectPgError(svc("select public.worker_report($1, $2, $3, 'succeeded', '{}', '{}') as r", [w, t, lease.lease_token]), "waiting for the owner");
+    await svc("select public.worker_request_approval($1, $2, $3) as r", [w, prop.proposal_id, lease.lease_token]);
+    await asUser(ws.ownerId, (q) => q("select public.decide_approval($1, 'approve', $2)", [prop.proposal_id, prop.payload_hash]));
+    const l2 = await claim(w, t);
+    await expectPgError(svc("select public.worker_report($1, $2, $3, 'succeeded', '{}', '{}') as r", [w, t, l2.lease_token]), "never carried out");
+    // Blocking is still allowed, so the owner sees it in Exceptions.
+    const blocked = await svc("select public.worker_report($1, $2, $3, 'blocked', '{\"reason\":\"could not send\"}', '{}') as r", [w, t, l2.lease_token]);
+    expect(blocked.status).toBe("blocked");
+  });
+
   it("the payload hash must match exactly", async () => {
     const { ws, w, t, lease, prop } = await setup();
     await svc("select public.worker_request_approval($1, $2, $3) as r", [w, prop.proposal_id, lease.lease_token]);
