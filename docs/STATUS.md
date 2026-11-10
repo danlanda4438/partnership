@@ -86,7 +86,9 @@ _Last updated: 2026-11-10 (spreadsheets imported into production; next: verify, 
 ## Decisions recorded
 
 - **Bots run on Grok Bot** (Soled = coordinator; affiliates, co-marketing, media & PR, listing). They connect through Grok custom connectors (OAuth, one per bot) and are woken by Grok routine webhooks. Grok's connectors may be account-wide, so each bot's instructions name its own connector, and the server limits each connector to its bot's scope.
-- **impact.com stays out of the app**, even though the bots use it elsewhere. Only manual affiliate milestones are recorded.
+- **impact.com is part of the app (changed 2026-11-10, owner's decision; the brief had excluded it).** Soled, Gleeday affiliates and Gleeday Co-Marketing work on impact.com end to end. They record impact.com activity as evidence (impact.* events, Affiliates and Co-Marketing only) and set milestones with proof (new Affiliates milestone "Joined on impact.com"). Partner-facing or terms-setting impact.com actions (proposals, contracts, accepting or declining applications, commission changes) need the owner's approval of the exact action, and only bots with the `impact.manage` permission can carry them out. The app has no impact.com API connection; bots use their own access. Spreadsheet rows about impact.com were excluded from the first import and are not re-imported.
+- **Owner can create tasks** in the app (Tasks → New task, or "Give a bot a task" on a partner page). Bots see them as `requested_by: "owner (in the app)"` and do them first.
+- **First live test (2026-11-10):** a bot sent an unapproved email (bots hold their own Gmail access) and then claimed success. The database now refuses "done" while an approval is pending or approved-but-not-executed. The owner chose to keep bots sending (not the app). Mitigations: low daily limits, Grok's own confirmation where available, and a weekly Sent-vs-Approvals check.
 
 - **Supabase project:** `Partnerships` (ref `ujtgbkilcownazwudtjt`, org Invitfull, region ap-southeast-2). Set up by the owner via the SQL Editor (`supabase/manual/`). No Supabase keys are held by the build sessions.
 

@@ -17,7 +17,7 @@ Gleeday Operations MCP server: claim → context → propose → (you approve) �
 - The **MCP server** at `https://<your-app>/api/mcp` is the only way bots read or change operational data.
 - A **webhook** only starts a bot run. Work is done only when the bot reports back.
 - Every outgoing email, price, spend or commitment waits in **Approvals**. Grok's own "allow" prompt for sending through Gmail still applies on top.
-- **impact.com is out of scope for this app.** Bots may keep using it elsewhere, but must not record impact.com links, conversions or commissions here. Only manual milestones ("agreed", "manually onboarded", "promoting") belong in the app.
+- **impact.com** is used by Soled, Gleeday affiliates and Gleeday Co-Marketing. They record what happens there (impact.* events) and ask approval for any partner-facing or terms-setting impact.com action. Only bots with the `impact.manage` permission can carry those out (see `supabase/manual/05_impact_permissions.sql`).
 
 ## Step 1: Register the bots (once)
 
@@ -52,7 +52,7 @@ The Bots page shows each bot's address on its card.
 1. Open the bot's chat in Grok and say:
    > Add the custom MCP server https://&lt;your-app&gt;/api/mcp/&lt;bot-address&gt; and name it "Gleeday Ops – &lt;bot name&gt;".
 2. Grok opens a sign-in. Sign in to Gleeday Operations, choose **that same bot** under **Act as**, and click **Allow**.
-3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels. A channel bot sees 15 tools; only Soled (coordinator) sees 18.
+3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels. A channel bot sees 16 tools; only Soled (coordinator) sees 19.
 
 Repeat for each bot, choosing the matching bot each time.
 
@@ -96,6 +96,7 @@ Without webhooks, bots only work when you or a schedule start them. You can also
 | `createProspect(channel, externalRef, prospect)` | all | Add a new not-yet-contacted prospect; never merges on names |
 | `appendActivity(sourceId, externalEventId, evidence)` | all | Record what really happened (idempotent) |
 | `setStage(opportunityId, stage, evidenceEventId)` | all | Stage move with proof |
+| `setMilestone(opportunityId, milestone, evidenceEventId)` | all | Program milestone with proof (e.g. joined_impact) |
 | `proposeAction(…exactPayload)` → `requestApproval` | all | Ask you to approve the exact email, terms or spend |
 | `startApprovedAction` → `reportActionOutcome` | senders | Carry out an approved action once; report the Gmail message id |
 | `reportTaskResult` / `reportBlocked` | all | Finish or stop a task |

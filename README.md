@@ -54,7 +54,7 @@ The integration limitations and Command Center adapter guide are written in the 
 
 ## Hard boundaries
 
-- **No impact.com** integration of any kind.
+- **impact.com:** bots work there with their own access; the app records the evidence and holds partner-facing impact.com actions for approval. No app-side impact.com API connection.
 - The **Command Center** is a separate system. No shared code, database or auth, and no invented endpoints.
 - Google Sheets stay untouched until an approved cutover. After that they are read-only archives; their sharing permissions are never changed automatically.
 - No real messages, campaign changes or commitments during development without explicit authorization.

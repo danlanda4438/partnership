@@ -57,7 +57,7 @@ describe("MCP server", () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "appendActivity", "claimTask", "createProspect", "getContext", "heartbeat", "listTasks", "proposeAction", "reportActionOutcome",
-      "reportBlocked", "reportTaskResult", "requestApproval", "searchOpportunities", "setStage", "startApprovedAction", "whoAmI",
+      "reportBlocked", "reportTaskResult", "requestApproval", "searchOpportunities", "setMilestone", "setStage", "startApprovedAction", "whoAmI",
     ]);
     expect(client.getInstructions()).toContain("Never act until the approval is approved");
     const me = await call(client, "whoAmI");

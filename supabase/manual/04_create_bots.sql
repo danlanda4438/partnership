@@ -16,9 +16,9 @@ end $$;
 
 with ws as (select id from public.workspaces where slug = 'gleeday'),
 bots(name, role, description, capabilities, routine_ref, daily_limit, parallel) as (values
-  ('Soled', 'coordinator', 'Manages tasks: assigns work to the team and handles blocked work', array['tasks.assign', 'gmail.send'], 'SOLED', 20, 3),
-  ('Gleeday affiliates', 'affiliates', 'Affiliate program outreach and follow-ups (Instantly, Gmail)', array['gmail.send'], 'GLEEDAY_AFFILIATES', 25, 2),
-  ('Gleeday Co-Marketing', 'co_marketing', 'Co-marketing program outreach and follow-ups (Instantly, Gmail)', array['gmail.send'], 'GLEEDAY_CO_MARKETING', 25, 2),
+  ('Soled', 'coordinator', 'Manages tasks: assigns work to the team and handles blocked work', array['tasks.assign', 'gmail.send', 'impact.manage'], 'SOLED', 20, 3),
+  ('Gleeday affiliates', 'affiliates', 'Affiliate program outreach and follow-ups (Instantly, Gmail, impact.com)', array['gmail.send', 'impact.manage'], 'GLEEDAY_AFFILIATES', 25, 2),
+  ('Gleeday Co-Marketing', 'co_marketing', 'Co-marketing program outreach and follow-ups (Instantly, Gmail, impact.com)', array['gmail.send', 'impact.manage'], 'GLEEDAY_CO_MARKETING', 25, 2),
   ('Gleeday Media & PR', 'media_pr', 'Paid media program: outreach, proposals, placements', array['gmail.send'], 'GLEEDAY_MEDIA_PR', 25, 2),
   ('Gleeday Listing', 'listings', 'Listing program: submissions, reviews, live checks', array['gmail.send'], 'GLEEDAY_LISTING', 25, 2)
 )

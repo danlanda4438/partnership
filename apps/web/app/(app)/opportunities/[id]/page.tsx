@@ -37,6 +37,12 @@ const EVENT_LABELS: Record<string, string> = {
   "message.received": "Reply received",
   "import.historical_send": "Historical outreach (from spreadsheet)",
   "listing.submitted": "Listing submitted",
+  "impact.partner_applied": "impact.com: partner applied",
+  "impact.proposal_sent": "impact.com: proposal sent",
+  "impact.partner_joined": "impact.com: partner joined",
+  "impact.partner_declined": "impact.com: declined",
+  "impact.terms_changed": "impact.com: terms changed",
+  "impact.performance": "impact.com: performance",
 };
 
 const eventLabel = (t: string) =>
@@ -139,7 +145,7 @@ export default async function OpportunityPage({
             {d.organization.parent ? ` · part of ${d.organization.parent.name}` : ""}
           </>
         }
-        actions={<span className="badges"><StageBadge stage={o.stage} /><DispositionBadge disposition={o.disposition} />{milestoneLabel ? <span className="pill info">{milestoneLabel}</span> : null}</span>}
+        actions={<span className="badges"><StageBadge stage={o.stage} /><DispositionBadge disposition={o.disposition} />{milestoneLabel ? <span className="pill info">{milestoneLabel}</span> : null}{writable ? <Link className="link-button" href={`/tasks?opportunity=${o.id}&channel=${kind}&partner=${encodeURIComponent(d.organization.name)}`}>Give a bot a task</Link> : null}</span>}
       />
       <Flash ok={sp.ok} error={sp.error} />
 

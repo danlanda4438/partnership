@@ -35,6 +35,7 @@ export const MILESTONES: Record<ChannelKind, readonly { key: string; label: stri
   affiliates: [
     { key: "agreed", label: "Agreed" },
     { key: "manually_onboarded", label: "Manually onboarded" },
+    { key: "joined_impact", label: "Joined on impact.com" },
     { key: "promoting", label: "Promoting" },
   ],
   co_marketing: [
