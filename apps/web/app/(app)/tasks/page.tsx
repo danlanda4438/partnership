@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { dispatchPending } from "@/lib/dispatch";
+import { getServiceDb, serviceConfigured } from "@/lib/service-db";
 import { ChannelName, Empty, Flash, PageHeader, When } from "@/components/ui";
 import { CHANNEL_KINDS, CHANNEL_LABELS, zonedLocalToUtc } from "@gleeday/domain";
 import { act, optional, str } from "@/lib/act";
@@ -28,6 +31,10 @@ async function cancelTask(form: FormData) {
 
 async function newTask(form: FormData) {
   "use server";
+  // Wake the bot right after the response (best effort; page views and the daily run retry).
+  after(async () => {
+    if (serviceConfigured()) await dispatchPending(await getServiceDb()).catch(() => {});
+  });
   await act("/tasks", "Task created. The bot is notified and will pick it up.", ({ db, workspace }) => {
     if (!workspace) throw new Error("No workspace");
     const [channel, bot] = str(form, "assignment").split(":");
