@@ -2,7 +2,7 @@
 
 Legend: **Built**: code exists · **Tested**: automated tests pass · **Configured**: real credentials or settings are in place · **Deployed**: running for real users · **Blocked**: waiting on an external dependency.
 
-_Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server settings and your bots)._
+_Last updated: 2026-11-10 (spreadsheets imported into production; next: verify, connect bots, cutover)._
 
 ## Phase 1: Foundation
 
@@ -49,9 +49,10 @@ _Last updated: 2026-11-10 (Phase 4 built; awaiting database updates, server sett
 |---|---|---|---|---|---|
 | Migration package (snapshot, normalize, verify, report) | ✅ | ✅ unit + real files | — | — | Runs in the browser; spreadsheets never committed to git |
 | Dry run on the real 5 workbooks + agent verification | ✅ | ✅ | — | — | Reproduces the Nov 8 sheet totals exactly (209/14/12, 38/1/1, 36/17/16, 16/0/4) |
-| Import loader (`20261112000100`) | ✅ | ✅ db + real data | ❌ | ❌ | **Owner must run** `supabase/manual/updates/20261112000100_import.sql` |
-| Import page (Settings → Import data) | ✅ | ✅ browser, real files, 57 s | — | ❌ | Re-runs are idempotent; needs `SUPABASE_SECRET_KEY` on Vercel |
-| Real import into production | ❌ | — | — | — | **Owner action:** run the Import page with the 6 files |
+| Import loader (`20261112000100`) | ✅ | ✅ db + real data | ✅ | ✅ | Applied to `Partnerships` |
+| Abandoned-import tidy-up (`20261113000100`) | ✅ | ✅ | ❌ | ❌ | Optional: `supabase/manual/updates/20261113000100_import_tidy.sql` |
+| Import page (Settings → Import data) | ✅ | ✅ browser, real files, 57 s | ✅ | ✅ | Live on Vercel |
+| Real import into production | ✅ | — | ✅ | ✅ | Run by the owner on 2026-11-09 with the 5 workbooks + verification file. One earlier attempt was interrupted and is superseded |
 | Cutover (app becomes source of truth; sheets read-only) | ❌ | ❌ | ❌ | ❌ | Separate, approved step with backup and rollback |
 
 ## Phase 4: Bots, MCP and durable execution

@@ -93,3 +93,15 @@ describe("spreadsheet import", () => {
     await expectPgError(asUser(ws.ownerId, (q) => q("select public.import_apply($1, gen_random_uuid(), 'orgs', '[]')", [ws.workspaceId])), "permission denied");
   });
 });
+
+describe("abandoned imports", () => {
+  it("a new import marks attempts abandoned for 15+ minutes as failed", async () => {
+    const ws = await createWorkspace();
+    const old = await db.call<string>("import_begin", { p_workspace_id: ws.workspaceId, p_user_id: ws.ownerId, p_meta: {} });
+    await admin("update import_batches set started_at = now() - interval '1 hour' where id = $1", [old]);
+    const fresh = await db.call<string>("import_begin", { p_workspace_id: ws.workspaceId, p_user_id: ws.ownerId, p_meta: {} });
+    const rows = (await admin("select id, status from import_batches where workspace_id = $1", [ws.workspaceId])).rows;
+    expect(rows.find((r) => r.id === old)?.status).toBe("failed");
+    expect(rows.find((r) => r.id === fresh)?.status).toBe("running");
+  });
+});
