@@ -183,3 +183,26 @@ describe("routine dispatcher", () => {
     expect(text).not.toContain("ignore all rules");
   });
 });
+
+describe("per-bot addresses", () => {
+  it("gives every bot a stable address", async () => {
+    const { botSlug } = await import("../../apps/web/lib/mcp/server");
+    expect(["Soled", "Gleeday affiliates", "Gleeday Co-Marketing", "Gleeday Media & PR", "Gleeday Listing"].map(botSlug))
+      .toEqual(["soled", "gleeday-affiliates", "gleeday-co-marketing", "gleeday-media-pr", "gleeday-listing"]);
+  });
+
+  it("an address only accepts its own bot; a different bot's sign-in must sign in again", async () => {
+    const ws = await createWorkspace();
+    const aff = await botWithToken(ws);
+    const name = (await admin("select name from worker_identities where id = $1", [aff.id])).rows[0].name as string;
+    const { botSlug } = await import("../../apps/web/lib/mcp/server");
+    const body = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} });
+    const headers = { authorization: `Bearer ${aff.token}`, "content-type": "application/json", accept: "application/json, text/event-stream" };
+    const ok = await handleMcpRequest(db, new Request("https://ops.test/api/mcp/x", { method: "POST", headers, body }), "https://ops.test/meta", botSlug(name));
+    expect(ok.status).toBe(200);
+    const wrong = await handleMcpRequest(db, new Request("https://ops.test/api/mcp/soled", { method: "POST", headers, body }), "https://ops.test/meta/soled", "soled");
+    expect(wrong.status).toBe(401);
+    expect(wrong.headers.get("www-authenticate")).toContain('error="invalid_token"');
+    expect((await wrong.json()).error.message).toContain('belongs to bot "soled"');
+  });
+});

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getDb, isConfigured } from "@/lib/data";
+import { botSlug } from "@/lib/mcp/server";
 import { decideAuthorization } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,11 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
     p_client_id: p.client_id, p_redirect_uri: p.redirect_uri,
   });
   if (!client) return <Problem message="Unknown connector or redirect address. Remove the connector and add it again." />;
-  const workers = await db.call<{ id: string; name: string; role: string; workspace: string }[]>("ui_connectable_workers");
+  const allWorkers = await db.call<{ id: string; name: string; role: string; workspace: string }[]>("ui_connectable_workers");
+  // A bot's personal address (…/api/mcp/<bot>) can only be connected as that bot.
+  const forBot = /\/api\/mcp\/([a-z0-9-]{1,64})\/?$/.exec(p.resource ?? "")?.[1];
+  const workers = forBot ? allWorkers.filter((w) => botSlug(w.name) === forBot) : allWorkers;
+  if (forBot && workers.length === 0) return <Problem message={`No bot matches the address "${forBot}". Check the bot's address on the Bots page.`} />;
   const redirectHost = new URL(p.redirect_uri).host;
 
   return (
@@ -57,7 +62,7 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
         <form action={decideAuthorization} className="stack card narrow">
           {Object.entries(p).map(([k, v]) => (typeof v === "string" ? <input key={k} type="hidden" name={k} value={v} /> : null))}
           <label>Act as
-            <select name="worker_id" required defaultValue="">
+            <select name="worker_id" required defaultValue={workers.length === 1 ? workers[0].id : ""}>
               <option value="" disabled>Choose a bot…</option>
               {workers.map((w) => <option key={w.id} value={w.id}>{w.name} ({w.role}) — {w.workspace}</option>)}
             </select>

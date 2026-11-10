@@ -1,6 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/data";
+import { botSlug } from "@/lib/mcp/server";
 
 export async function decideAuthorization(form: FormData) {
   const get = (k: string) => String(form.get(k) ?? "");
@@ -19,6 +20,16 @@ export async function decideAuthorization(form: FormData) {
   if (get("decision") !== "approve") {
     target.searchParams.set("error", "access_denied");
     redirect(target.toString());
+  }
+  // A bot's personal address may only be bound to that bot.
+  const forBot = /\/api\/mcp\/([a-z0-9-]{1,64})\/?$/.exec(get("resource"))?.[1];
+  if (forBot) {
+    const workers = await db.call<{ id: string; name: string }[]>("ui_connectable_workers");
+    const chosen = workers.find((w) => w.id === get("worker_id"));
+    if (!chosen || botSlug(chosen.name) !== forBot) {
+      target.searchParams.set("error", "access_denied");
+      redirect(target.toString());
+    }
   }
   let code: string | null = null;
   try {

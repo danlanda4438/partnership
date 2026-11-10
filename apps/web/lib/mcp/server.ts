@@ -260,15 +260,26 @@ export function buildServer(db: ServiceDb, me: WorkerIdentity): McpServer {
   return server;
 }
 
-/** Handles one MCP HTTP request statelessly. */
-export async function handleMcpRequest(db: ServiceDb, req: Request, resourceMetadataUrl: string): Promise<Response> {
+/** URL-safe name of a bot, used in its personal MCP address (/api/mcp/<slug>). */
+export const botSlug = (name: string) => name.toLowerCase().normalize("NFKD").replace(/&/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+/**
+ * Handles one MCP HTTP request statelessly. With `expectedBot`, the address belongs to one bot:
+ * a sign-in for any other bot is refused (and the client is asked to sign in again), so bots
+ * can't act as each other even if their host app shares connectors.
+ */
+export async function handleMcpRequest(db: ServiceDb, req: Request, resourceMetadataUrl: string, expectedBot?: string): Promise<Response> {
   const me = await authenticate(db, req.headers.get("authorization"));
-  if (!me) {
-    return new Response(JSON.stringify({ error: { code: "unauthorized", message: "A valid bot token is required" } }), {
+  const wrongBot = !!me && !!expectedBot && botSlug(me.name) !== expectedBot;
+  if (!me || wrongBot) {
+    const message = wrongBot
+      ? `This address belongs to bot "${expectedBot}", but this sign-in is for "${me!.name}". Sign in again and choose "${expectedBot}".`
+      : "A valid bot token is required";
+    return new Response(JSON.stringify({ error: { code: "unauthorized", message } }), {
       status: 401,
       headers: {
         "content-type": "application/json",
-        "www-authenticate": `Bearer resource_metadata="${resourceMetadataUrl}"`,
+        "www-authenticate": `Bearer ${wrongBot ? 'error="invalid_token", ' : ""}resource_metadata="${resourceMetadataUrl}"`,
       },
     });
   }

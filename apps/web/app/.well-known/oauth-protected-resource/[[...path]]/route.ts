@@ -2,6 +2,9 @@ import { originOf, protectedResourceMetadata } from "@/lib/oauth";
 
 export const dynamic = "force-dynamic";
 
-export function GET(req: Request) {
-  return Response.json(protectedResourceMetadata(originOf(req)), { headers: { "access-control-allow-origin": "*" } });
+export async function GET(req: Request, { params }: { params: Promise<{ path?: string[] }> }) {
+  const { path } = await params;
+  return Response.json(protectedResourceMetadata(originOf(req), (path ?? []).join("/") || "api/mcp"), {
+    headers: { "access-control-allow-origin": "*" },
+  });
 }

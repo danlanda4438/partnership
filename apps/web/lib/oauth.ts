@@ -5,9 +5,11 @@ export function originOf(req: Request): string {
   return new URL(req.url).origin;
 }
 
-export function protectedResourceMetadata(origin: string) {
+/** `path` is the MCP address path, e.g. "api/mcp" or "api/mcp/gleeday-affiliates" (one bot). */
+export function protectedResourceMetadata(origin: string, path = "api/mcp") {
+  const clean = /^api\/mcp(\/[a-z0-9-]{1,64})?$/.test(path) ? path : "api/mcp";
   return {
-    resource: `${origin}/api/mcp`,
+    resource: `${origin}/${clean}`,
     authorization_servers: [origin],
     bearer_methods_supported: ["header"],
     scopes_supported: ["bot"],

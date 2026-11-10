@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { CHANNEL_KINDS, CHANNEL_LABELS } from "@gleeday/domain";
 import { Empty, Flash, PageHeader, Pill, When } from "@/components/ui";
 import { canAdmin, requireWorkspace } from "@/lib/context";
+import { botSlug } from "@/lib/mcp/server";
 import type { BotItem } from "@/lib/types";
 import { createBot, revokeConnection, revokeToken, saveBot } from "./actions";
 import { TokenIssuer } from "./token-issuer";
@@ -36,7 +37,7 @@ export default async function BotsPage({ searchParams }: { searchParams: Promise
       <section className="card">
         <h3>How bots connect</h3>
         <p className="small">
-          Bots use the Gleeday Operations MCP server at <code>{origin}/api/mcp</code>. Two ways to connect, both giving the bot only its own access:
+          Each bot connects to its <strong>own address</strong>, shown on its card (<code>{origin}/api/mcp/&lt;bot&gt;</code>). That address only accepts that bot, so bots can't act as each other even if their app shares connectors. Two ways to connect:
         </p>
         <ul className="small">
           <li><strong>claude.ai connector</strong> (for Claude routines): add a custom connector with that address. When asked, sign in here and choose which bot it acts as.</li>
@@ -55,6 +56,7 @@ export default async function BotsPage({ searchParams }: { searchParams: Promise
               <Pill value={b.status} />
             </div>
             <p className="muted small">{b.role}{b.description ? ` — ${b.description}` : ""}</p>
+            <div className="small">Connector address: <code className="copyable">{origin}/api/mcp/{botSlug(b.name)}</code></div>
             <div className="small">
               {b.active_attempts} working now · last 7 days: {b.succeeded_7d} done, {b.blocked_7d} blocked, {b.failed_7d} failed/expired
             </div>

@@ -37,10 +37,22 @@ Each starts with a daily limit (Soled 20, others 25 approved actions per 24 hour
 
 Grok connects to outside tools only by OAuth sign-in. The app supports exactly that.
 
+Each bot has its **own address**. That address only accepts that bot, so even if Grok shares connectors between bots, one bot can't act as another:
+
+| Bot | Its address |
+|---|---|
+| Soled | `https://<your-app>/api/mcp/soled` |
+| Gleeday affiliates | `https://<your-app>/api/mcp/gleeday-affiliates` |
+| Gleeday Co-Marketing | `https://<your-app>/api/mcp/gleeday-co-marketing` |
+| Gleeday Media & PR | `https://<your-app>/api/mcp/gleeday-media-pr` |
+| Gleeday Listing | `https://<your-app>/api/mcp/gleeday-listing` |
+
+The Bots page shows each bot's address on its card.
+
 1. Open the bot's chat in Grok and say:
-   > Add the custom MCP server https://&lt;your-app&gt;/api/mcp and name it "Gleeday Ops – &lt;bot name&gt;".
+   > Add the custom MCP server https://&lt;your-app&gt;/api/mcp/&lt;bot-address&gt; and name it "Gleeday Ops – &lt;bot name&gt;".
 2. Grok opens a sign-in. Sign in to Gleeday Operations, choose **that same bot** under **Act as**, and click **Allow**.
-3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels.
+3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels. A channel bot sees 15 tools; only Soled (coordinator) sees 18.
 
 Repeat for each bot, choosing the matching bot each time.
 
