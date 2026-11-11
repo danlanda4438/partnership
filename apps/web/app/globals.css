@@ -213,3 +213,26 @@ pre.token { font-family: ui-monospace, Menlo, monospace; font-size: 13px; user-s
 .progress { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 10px 0 6px; }
 .progress > div { height: 100%; background: var(--accent); transition: width 0.3s; }
 code.copyable { user-select: all; word-break: break-all; }
+
+/* Tasks → Messages */
+.messages { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; }
+.threads { display: flex; flex-direction: column; gap: 6px; max-height: 75vh; overflow-y: auto; }
+.thread-link { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+.thread-link:hover { text-decoration: none; border-color: var(--accent); }
+.thread-link.active { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.thread-link.new { font-weight: 600; color: var(--accent); }
+.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.thread { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.bubbles { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bubble { max-width: 85%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.bubble.me { align-self: flex-end; background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.bubble.me .muted, .bubble.me a { color: inherit; opacity: 0.85; }
+.bubble-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble-head { margin-bottom: 4px; opacity: 0.85; }
+.composer textarea { width: 100%; }
+.composer-row { align-items: center; justify-content: space-between; }
+label.inline { display: flex; gap: 6px; align-items: center; }
+@media (max-width: 760px) {
+  .messages { grid-template-columns: 1fr; }
+  .threads { max-height: 220px; }
+}

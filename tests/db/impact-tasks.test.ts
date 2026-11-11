@@ -86,3 +86,49 @@ describe("impact.com", () => {
     }
   });
 });
+
+describe("conversations with bots", () => {
+  it("a message becomes a task for the tagged bot; the bot reads the thread and answers", async () => {
+    const ws = await createWorkspace();
+    const soled = await createWorker(ws.workspaceId, { name: "Soled", capabilities: ["tasks.assign"], channelIds: Object.values(ws.channels) });
+    await admin("update public.worker_identities set role = 'coordinator' where id = $1", [soled]);
+    const aff = await createWorker(ws.workspaceId, { name: "Gleeday affiliates", capabilities: ["gmail.send"], channelIds: [ws.channels.affiliates] });
+    const outsider = await createWorker(ws.workspaceId, { name: "Gleeday Listing", capabilities: [], channelIds: [ws.channels.listings] });
+
+    // No bot chosen → Soled
+    const thread = (await asUser(ws.ownerId, (q) => q("select public.send_bot_message($1, null, 'What is open this week?') as t", [ws.workspaceId]))).rows[0].t;
+    const list = await svc("select public.worker_list_tasks($1) as r", [soled]);
+    const task = list.tasks.find((t: { kind: string }) => t.kind === "owner.message");
+    expect(task).toMatchObject({ requested_by: "owner (in the app)", details: { thread_id: thread, message: "What is open this week?" } });
+    const d = await admin("select event_type from public.webhook_deliveries where worker_id = $1", [soled]);
+    expect(d.rows.map((r) => r.event_type)).toContain("task.available");
+
+    const conv = await svc("select public.worker_get_conversation($1, $2) as r", [soled, thread]);
+    expect(conv.messages).toMatchObject([{ from: "owner", to: "Soled", text: "What is open this week?" }]);
+    await svc("select public.worker_reply($1, $2, 'Three follow-ups are due.') as r", [soled, thread]);
+
+    // Soled hands work to the affiliates bot in the same thread; that bot may answer there.
+    await expectPgError(svc("select public.worker_reply($1, $2, 'hi') as r", [aff, thread]), "conversation not found");
+    await svc("select public.worker_create_task($1, 'affiliates', 'outreach.follow_up', 'Follow-ups', $3, null, $2, 50, null, 'conv-1') as r",
+      [soled, aff, JSON.stringify({ thread_id: thread })]);
+    await svc("select public.worker_reply($1, $2, 'On it.') as r", [aff, thread]);
+    await expectPgError(svc("select public.worker_get_conversation($1, $2) as r", [outsider, thread]), "conversation not found");
+
+    // The owner replies to the affiliates bot directly in the same thread.
+    await asUser(ws.ownerId, (q) => q("select public.send_bot_message($1, $2, 'Thanks — start with Acme.', $3)", [ws.workspaceId, aff, thread]));
+    const view = (await asUser(ws.ownerId, (q) => q("select public.ui_conversation($1, $2) as v", [ws.workspaceId, thread]))).rows[0].v;
+    expect(view.messages.map((m: { from_bot: string | null; text: string }) => `${m.from_bot ?? "You"}: ${m.text}`)).toEqual([
+      "You: What is open this week?", "Soled: Three follow-ups are due.", "Gleeday affiliates: On it.", "You: Thanks — start with Acme.",
+    ]);
+    expect(view.tasks).toMatchObject([{ title: "Follow-ups", bot: "Gleeday affiliates" }]);
+    const threads = (await asUser(ws.ownerId, (q) => q("select public.ui_conversations($1) as v", [ws.workspaceId]))).rows[0].v;
+    expect(threads).toMatchObject([{ thread_id: thread, messages: 4, waiting_for_bot: true }]);
+
+    // Other workspaces see nothing; viewers can read but not send; messages are immutable.
+    const other = await createWorkspace();
+    expect((await asUser(other.ownerId, (q) => q("select public.ui_conversations($1) as v", [ws.workspaceId]))).rows[0].v).toEqual([]);
+    const viewer = await addMember(ws.workspaceId, "viewer");
+    await expectPgError(asUser(viewer, (q) => q("select public.send_bot_message($1, null, 'hi')", [ws.workspaceId])), "not authorized");
+    await expectPgError(admin("update public.conversation_messages set body = 'x' where thread_id = $1", [thread]));
+  });
+});

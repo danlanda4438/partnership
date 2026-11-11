@@ -145,7 +145,7 @@ export default async function OpportunityPage({
             {d.organization.parent ? ` · part of ${d.organization.parent.name}` : ""}
           </>
         }
-        actions={<span className="badges"><StageBadge stage={o.stage} /><DispositionBadge disposition={o.disposition} />{milestoneLabel ? <span className="pill info">{milestoneLabel}</span> : null}{writable ? <Link className="link-button" href={`/tasks?opportunity=${o.id}&channel=${kind}&partner=${encodeURIComponent(d.organization.name)}`}>Give a bot a task</Link> : null}</span>}
+        actions={<span className="badges"><StageBadge stage={o.stage} /><DispositionBadge disposition={o.disposition} />{milestoneLabel ? <span className="pill info">{milestoneLabel}</span> : null}{writable ? <Link className="link-button" href={`/tasks?opportunity=${o.id}&channel=${kind}&partner=${encodeURIComponent(d.organization.name)}`}>Message a bot</Link> : null}</span>}
       />
       <Flash ok={sp.ok} error={sp.error} />
 

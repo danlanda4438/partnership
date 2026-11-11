@@ -52,7 +52,7 @@ The Bots page shows each bot's address on its card.
 1. Open the bot's chat in Grok and say:
    > Add the custom MCP server https://&lt;your-app&gt;/api/mcp/&lt;bot-address&gt; and name it "Gleeday Ops – &lt;bot name&gt;".
 2. Grok opens a sign-in. Sign in to Gleeday Operations, choose **that same bot** under **Act as**, and click **Allow**.
-3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels. A channel bot sees 16 tools; only Soled (coordinator) sees 19.
+3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels. A channel bot sees 18 tools; only Soled (coordinator) sees 21.
 
 Repeat for each bot, choosing the matching bot each time.
 
@@ -100,6 +100,7 @@ Without webhooks, bots only work when you or a schedule start them. You can also
 | `proposeAction(…exactPayload)` → `requestApproval` | all | Ask you to approve the exact email, terms or spend |
 | `startApprovedAction` → `reportActionOutcome` | senders | Carry out an approved action once; report the Gmail message id |
 | `reportTaskResult` / `reportBlocked` | all | Finish or stop a task |
+| `getConversation` / `replyToOwner` | all | Read and answer the owner's messages (tasks of kind `owner.message`) |
 | `getOverview`, `createTask`, `assignTask` | Soled | Coordinate the team |
 
 Errors: `unauthorized`, `forbidden`, `not_found`, `conflict`, `lease_expired`, `invalid_input`, `not_executable`, `rate_limited`, `internal`.

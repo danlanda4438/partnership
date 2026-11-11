@@ -8,6 +8,7 @@ import { CHANNEL_KINDS, CHANNEL_LABELS, zonedLocalToUtc } from "@gleeday/domain"
 import { act, optional, str } from "@/lib/act";
 import { canAdmin, canWrite, requireWorkspace } from "@/lib/context";
 import type { BotItem, TaskItem } from "@/lib/types";
+import { Messages } from "./messages";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ const COLUMNS: { label: string; statuses: string[] }[] = [
 
 async function cancelTask(form: FormData) {
   "use server";
-  await act("/tasks", "Task cancelled", ({ db }) =>
+  await act("/tasks?view=board", "Task cancelled", ({ db }) =>
     db.call("cancel_task", { p_task_id: str(form, "task_id"), p_reason: optional(form, "reason") ?? "Cancelled by owner" }),
   );
   revalidatePath("/");
@@ -35,7 +36,7 @@ async function newTask(form: FormData) {
   after(async () => {
     if (serviceConfigured()) await dispatchPending(await getServiceDb()).catch(() => {});
   });
-  await act("/tasks", "Task created. The bot is notified and will pick it up.", ({ db, workspace }) => {
+  await act("/tasks?view=board", "Task created. The bot is notified and will pick it up.", ({ db, workspace }) => {
     if (!workspace) throw new Error("No workspace");
     const [channel, bot] = str(form, "assignment").split(":");
     const due = optional(form, "due_date");
@@ -64,11 +65,30 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   // Opened from a partner's page: the task is about that partner, in its program.
   const forChannel = CHANNEL_KINDS.find((k) => k === sp.channel);
   const channels = forChannel ? [forChannel] : CHANNEL_KINDS;
+  const board = sp.view === "board" || Boolean(sp.new);
+  const tabs = (
+    <div className="tabs">
+      <Link href="/tasks" className={!board ? "tab active" : "tab"}>Messages</Link>
+      <Link href="/tasks?view=board" className={board ? "tab active" : "tab"}>Board</Link>
+    </div>
+  );
+  if (!board) {
+    return (
+      <>
+        <PageHeader title="Tasks" subtitle="Write to a bot and tag it (@soled, @affiliates, @co-marketing, @media, @listing). It answers here; emails still come to Approvals." />
+        <Flash ok={sp.ok} error={sp.error} />
+        {tabs}
+        <Messages db={db} workspaceId={workspace.id} bots={bots} threadId={sp.thread} opportunity={sp.opportunity}
+          partner={sp.partner} canSend={canWrite(workspace.role)} />
+      </>
+    );
+  }
 
   return (
     <>
       <PageHeader title="Tasks" subtitle="Work for the bots, from Soled or from you. A bot claims a task, does it, and reports back with evidence." />
       <Flash ok={sp.ok} error={sp.error} />
+      {tabs}
       {canWrite(workspace.role) ? (
         <details className="card narrow" open={Boolean(sp.new || sp.opportunity)}>
           <summary><strong>+ New task</strong>{sp.partner ? <> about {sp.partner}</> : null}</summary>
