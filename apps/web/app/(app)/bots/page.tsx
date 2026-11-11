@@ -164,7 +164,7 @@ export default async function BotsPage({ searchParams }: { searchParams: Promise
                 <div className="list-main">
                   <span><strong>{d.worker}</strong> · {d.event_type}</span>
                   <span className="muted small">
-                    {d.status === "skipped" ? "No routine linked to this bot" : d.last_error ?? (d.session_url ? <a href={d.session_url} target="_blank" rel="noreferrer">Open the bot's session</a> : null)}
+                    {d.status === "skipped" ? (d.last_error ?? "No routine linked to this bot") : d.last_error ?? (d.session_url ? <a href={d.session_url} target="_blank" rel="noreferrer">Open the bot's session</a> : null)}
                   </span>
                 </div>
                 <span className="list-side">

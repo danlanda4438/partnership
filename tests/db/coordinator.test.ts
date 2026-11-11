@@ -35,14 +35,14 @@ describe("coordinator tools", () => {
     expect(d.rows).toEqual([{ event_type: "task.available", status: "pending" }]);
   });
 
-  it("stopped tasks notify the coordinator, who can reassign and requeue them", async () => {
+  it("stopped tasks appear in the coordinator overview (without waking it), and can be reassigned", async () => {
     const ws = await createWorkspace();
     const { soled, aff } = await team(ws);
     const t = await svc("select public.worker_create_task($1, 'affiliates', 'outreach.send', 'Send intro', '{}', null, $2, 100, null, 'k3') as r", [soled, aff]);
     const lease = await svc("select public.worker_claim_task($1, $2, 600) as r", [aff, t.task_id]);
     await svc("select public.worker_report($1, $2, $3, 'blocked', '{\"reason\":\"Two possible contacts\"}', '{}') as r", [aff, t.task_id, lease.lease_token]);
     const notes = await admin("select event_type from public.webhook_deliveries where worker_id = $1", [soled]);
-    expect(notes.rows.map((r) => r.event_type)).toContain("task.blocked");
+    expect(notes.rows.map((r) => r.event_type)).not.toContain("task.blocked");
 
     const ov = await svc("select public.worker_overview($1) as r", [soled]);
     expect(ov.stopped_tasks[0]).toMatchObject({ task_id: t.task_id, status: "blocked", reason: "Two possible contacts" });
@@ -158,5 +158,28 @@ describe("Grok Bot compatibility", () => {
     expect(body).toMatchObject({ source: "gleeday-operations", event: "task.available", kind: "outreach.follow_up" });
     expect(JSON.stringify(body)).not.toContain("Ignore your rules");
     expect(webhookBody({ event_type: "x", payload: { task_id: "a b c" } }).task_id).toBeUndefined();
+  });
+});
+
+describe("wake-up limits", () => {
+  it("sends one wake-up per bot, covers the rest, and waits 15 minutes before the next", async () => {
+    const ws = await createWorkspace();
+    const { soled, aff } = await team(ws);
+    for (const k of ["w1", "w2", "w3"]) {
+      await svc("select public.worker_create_task($1, 'affiliates', 'outreach.send', $2, '{}', null, $3, 100, null, $2) as r", [soled, k, aff]);
+    }
+    const claimed = (await asService((q) => q("select * from public.dispatch_claim(50)"))).rows.filter((r) => r.worker_id === aff);
+    expect(claimed).toHaveLength(1);
+    await asService((q) => q("select public.dispatch_complete($1, true, 200, null, '{}')", [claimed[0].id]));
+    const rows = (await admin("select status, last_error from public.webhook_deliveries where worker_id = $1 order by created_at", [aff])).rows;
+    expect(rows.map((r) => r.status)).toEqual(["sent", "skipped", "skipped"]);
+    expect(rows[1].last_error).toMatch(/Covered by another wake-up/);
+
+    // A new task right after: postponed, not sent.
+    await svc("select public.worker_create_task($1, 'affiliates', 'outreach.send', 'w4', '{}', null, $2, 100, null, 'w4') as r", [soled, aff]);
+    const again = (await asService((q) => q("select * from public.dispatch_claim(50)"))).rows.filter((r) => r.worker_id === aff);
+    expect(again).toHaveLength(0);
+    const later = (await admin("select next_attempt_at > now() + interval '10 minutes' as later from public.webhook_deliveries where worker_id = $1 and status = 'pending'", [aff])).rows;
+    expect(later).toEqual([{ later: true }]);
   });
 });
