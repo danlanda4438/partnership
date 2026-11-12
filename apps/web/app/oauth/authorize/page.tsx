@@ -53,7 +53,7 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
     <main>
       <h1>Connect a bot</h1>
       <p>
-        <strong>{client.client_name}</strong> ({redirectHost}) wants to act in Gleeday Operations <strong>as one of your bots</strong>.
+        <strong>{client.client_name}</strong> ({redirectHost}) wants to act in Gleeday Partnership Ops <strong>as one of your bots</strong>.
         It will get that bot's access only: its channels, tasks and limits. Every outgoing message, price, spend or commitment still needs your approval.
       </p>
       {workers.length === 0 ? (

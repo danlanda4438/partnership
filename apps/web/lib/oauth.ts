@@ -13,7 +13,7 @@ export function protectedResourceMetadata(origin: string, path = "api/mcp") {
     authorization_servers: [origin],
     bearer_methods_supported: ["header"],
     scopes_supported: ["bot"],
-    resource_name: "Gleeday Operations",
+    resource_name: "Gleeday Partnership Ops",
   };
 }
 

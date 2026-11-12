@@ -10,7 +10,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main>
       <h1>Sign in</h1>
-      <p className="muted">Gleeday Operations Center is invite-only.</p>
+      <p className="muted">Gleeday Partnership Ops is invite-only.</p>
       {sent ? (
         <p className="notice">If this address has access, a sign-in link is on its way. Check your inbox.</p>
       ) : (

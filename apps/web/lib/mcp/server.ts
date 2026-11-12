@@ -1,4 +1,4 @@
-// Gleeday Operations MCP server: the only way bots read and change operational state.
+// Gleeday Partnership Ops MCP server: the only way bots read and change operational state.
 //
 // Every request is authenticated with a per-bot token. The bot's identity, workspace and
 // channel scope come from that token (resolved in the database), never from tool arguments.
@@ -58,7 +58,7 @@ export async function authenticate(db: ServiceDb, authorization: string | null):
   }
 }
 
-export const SERVER_INSTRUCTIONS = `You are connected to Gleeday Operations as a bot with your own identity, workspace and channels.
+export const SERVER_INSTRUCTIONS = `You are connected to Gleeday Partnership Ops as a bot with your own identity, workspace and channels.
 Rules the server enforces:
 - Work only on tasks you claim (claimTask returns a leaseToken). Send heartbeat for long work; leases expire.
 - Anything outward-facing (emails, prices, spend, commitments) needs approval: proposeAction with the EXACT payload, then requestApproval. Never act until the approval is approved. requestApproval never means approved.
