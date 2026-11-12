@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ChannelName, Empty, Flash, PageHeader, Pill, Stat, StageBadge, When } from "@/components/ui";
-import { requireWorkspace } from "@/lib/context";
-import type { ChangeItem, Daily } from "@/lib/types";
+import { QuickApprovals } from "@/components/quick-approvals";
+import { canAdmin, requireWorkspace } from "@/lib/context";
+import type { ApprovalListItem, ChangeItem, Daily } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const windowKey = sp.window && WINDOWS[sp.window] ? sp.window : "24h";
   const { db, workspace } = await requireWorkspace();
   const since = new Date(Date.now() - WINDOWS[windowKey].hours * 3_600_000).toISOString();
-  const d = await db.call<Daily>("ui_daily", { p_workspace_id: workspace.id, p_since: since });
+  const [d, pending] = await Promise.all([
+    db.call<Daily>("ui_daily", { p_workspace_id: workspace.id, p_since: since }),
+    db.call<ApprovalListItem[]>("ui_approvals", { p_workspace_id: workspace.id, p_status: "pending" }),
+  ]);
   const overdue = d.due.filter((x) => x.overdue).length;
 
   // One line per partner (newest first) instead of one line per event.
@@ -47,25 +51,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
       <section>
         <h2>Waiting for your decision</h2>
-        {d.pending_approvals.length === 0 ? (
+        {pending.length === 0 ? (
           <Empty>Nothing waiting for approval.</Empty>
         ) : (
-          <ul className="list">
-            {d.pending_approvals.map((a) => (
-              <li key={a.id}>
-                <Link href={`/approvals/${a.id}`} className="list-main">
-                  <strong>{a.summary}</strong>
-                  <span className="muted">
-                    {a.organization_name ? `${a.organization_name} · ` : ""}
-                    <ChannelName kind={a.channel_kind} /> · proposed by {a.proposed_by}
-                  </span>
-                </Link>
-                <span className="list-side muted">
-                  expires <When at={a.expires_at} relative />
-                </span>
-              </li>
-            ))}
-          </ul>
+          <QuickApprovals items={pending} back="/" canDecide={canAdmin(workspace.role)} />
         )}
       </section>
 

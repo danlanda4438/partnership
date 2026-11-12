@@ -12,6 +12,8 @@ export interface ApprovalListItem {
   opportunity_id: string | null;
   organization_name: string | null;
   channel_kind: string | null;
+  payload_hash?: string;
+  preview?: { to?: string; subject?: string; body?: string; platform?: string; action?: string; partner?: string; attachments?: number };
 }
 
 export interface ExceptionItem {

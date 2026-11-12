@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChannelName, Empty, Flash, PageHeader, Pill, When } from "@/components/ui";
-import { requireWorkspace } from "@/lib/context";
+import { QuickApprovals } from "@/components/quick-approvals";
+import { canAdmin, requireWorkspace } from "@/lib/context";
 import type { ApprovalListItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,8 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
       </div>
       {items.length === 0 ? (
         <Empty>{view === "pending" ? "Nothing is waiting for your approval." : "No approvals in the last 30 days."}</Empty>
+      ) : view === "pending" ? (
+        <QuickApprovals items={items} back="/approvals" canDecide={canAdmin(workspace.role)} />
       ) : (
         <ul className="list">
           {items.map((a) => (

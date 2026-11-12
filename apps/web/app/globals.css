@@ -236,3 +236,12 @@ label.inline { display: flex; gap: 6px; align-items: center; }
   .messages { grid-template-columns: 1fr; }
   .threads { max-height: 220px; }
 }
+
+/* Quick / bulk approvals */
+.bulk-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.qa-row { display: flex; gap: 10px; align-items: flex-start; }
+.qa-row > input[type="checkbox"] { margin-top: 4px; }
+.qa-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.qa-buttons { display: flex; gap: 6px; flex-shrink: 0; }
+button.small-btn { padding: 5px 10px; font-size: 13px; }
+@media (max-width: 760px) { .qa-row { flex-wrap: wrap; } .qa-buttons { width: 100%; } }

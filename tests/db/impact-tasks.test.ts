@@ -132,3 +132,21 @@ describe("conversations with bots", () => {
     await expectPgError(admin("update public.conversation_messages set body = 'x' where thread_id = $1", [thread]));
   });
 });
+
+describe("quick approvals list", () => {
+  it("shows a preview and the fingerprint; a decision with that fingerprint works, a stale one is refused", async () => {
+    const ws = await createWorkspace();
+    const w = await createWorker(ws.workspaceId, { name: "Gleeday affiliates", capabilities: ["gmail.send"], channelIds: [ws.channels.affiliates] });
+    const opp = await createOpportunity(ws.workspaceId, ws.channels.affiliates);
+    const mk = async (body: string) => (await admin(`insert into public.approvals (workspace_id, opportunity_id, action_type, summary, payload, proposed_by_worker_id, expires_at)
+      values ($1,$2,'send_message','Intro',$3,$4, now() + interval '1 day') returning id, payload_hash`,
+      [ws.workspaceId, opp, JSON.stringify({ to: ["a@x.com", "b@x.com"], subject: "Hi", body, attachments: [] }), w])).rows[0];
+    const a1 = await mk("Hello   there\nfriend");
+    const a2 = await mk("Second");
+    const list = (await asUser(ws.ownerId, (q) => q("select public.ui_approvals($1, 'pending') as v", [ws.workspaceId]))).rows[0].v;
+    const item = list.find((x: { id: string }) => x.id === a1.id);
+    expect(item).toMatchObject({ payload_hash: a1.payload_hash, preview: { to: "a@x.com, b@x.com", subject: "Hi", body: "Hello there friend", attachments: 0 } });
+    await asUser(ws.ownerId, (q) => q("select public.decide_approval($1, 'approve', $2)", [a1.id, item.payload_hash]));
+    await expectPgError(asUser(ws.ownerId, (q) => q("select public.decide_approval($1, 'approve', $2)", [a2.id, a1.payload_hash])), "payload changed");
+  });
+});

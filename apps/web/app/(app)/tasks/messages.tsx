@@ -28,10 +28,22 @@ export async function Messages({ db, workspaceId, bots, threadId, opportunity, p
 }) {
   const active = bots.filter((b) => b.status === "active");
   const soled = active.find((b) => b.role === "coordinator");
-  const [threads, thread] = await Promise.all([
-    db.call<ThreadItem[]>("ui_conversations", { p_workspace_id: workspaceId }),
-    threadId ? db.call<Thread>("ui_conversation", { p_workspace_id: workspaceId, p_thread_id: threadId }) : Promise.resolve(null),
-  ]);
+  let threads: ThreadItem[] = [];
+  let thread: Thread | null = null;
+  try {
+    [threads, thread] = await Promise.all([
+      db.call<ThreadItem[]>("ui_conversations", { p_workspace_id: workspaceId }),
+      threadId ? db.call<Thread>("ui_conversation", { p_workspace_id: workspaceId, p_thread_id: threadId }) : Promise.resolve(null),
+    ]);
+  } catch (err) {
+    return (
+      <div className="card">
+        <strong>Messages couldn't load.</strong>
+        <p className="small">{err instanceof Error ? err.message : String(err)}</p>
+        <p className="muted small">If this mentions a missing function, run the latest database update in Supabase (and then: <code>notify pgrst, &apos;reload schema&apos;;</code>). The <Link href="/tasks?view=board">Board</Link> still works.</p>
+      </div>
+    );
+  }
   const defaultBot = thread?.last_bot ?? soled?.id ?? "";
 
   const composer = canSend ? (
