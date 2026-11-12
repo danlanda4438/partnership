@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="shell">
       <header className="top">
         <Link href="/" className="brand">
-          Gleeday <span className="muted">Operations</span>
+          Gleeday <span className="muted">Partnership Ops</span>
         </Link>
         <div className="top-right">
           <span className="muted who">

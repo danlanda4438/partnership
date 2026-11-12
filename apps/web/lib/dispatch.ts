@@ -27,12 +27,12 @@ interface DueDelivery {
 }
 
 export function fireText(d: Pick<DueDelivery, "event_type" | "payload">): string {
-  const lines = [`Gleeday Operations notification: ${d.event_type}`];
+  const lines = [`Gleeday Partnership Ops notification: ${d.event_type}`];
   for (const key of ["task_id", "kind", "approval_id", "decision"]) {
     const v = d.payload[key];
     if (typeof v === "string" && /^[A-Za-z0-9_.:-]{1,80}$/.test(v)) lines.push(`${key}: ${v}`);
   }
-  lines.push("This only identifies work. Look it up and process it with the Gleeday Operations MCP tools.");
+  lines.push("This only identifies work. Look it up and process it with the Gleeday Partnership Ops MCP tools.");
   return lines.join("\n");
 }
 
@@ -43,7 +43,7 @@ export function webhookBody(d: Pick<DueDelivery, "event_type" | "payload">): Rec
     const v = d.payload[key];
     if (typeof v === "string" && /^[A-Za-z0-9_.:-]{1,80}$/.test(v)) body[key] = v;
   }
-  body.note = "Notification only. Look up and process this work with the Gleeday Operations MCP tools.";
+  body.note = "Notification only. Look up and process this work with the Gleeday Partnership Ops MCP tools.";
   return body;
 }
 

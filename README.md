@@ -1,4 +1,4 @@
-# Gleeday Operations Center
+# Gleeday Partnership Ops
 
 An independent operations app where **Soled coordinates the existing bot team**, bots do authorized work, and the owner handles **decisions, approvals and exceptions** across four workstreams: **Affiliates, Co-Marketing, Media & PR, Listings**.
 
