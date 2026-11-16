@@ -121,6 +121,38 @@ describe("read models", () => {
     expect(kinds).toEqual(["campaign_error", "identity_ambiguous", "opportunity_needs_verification", "task_blocked"]);
   });
 
+  it("an exception can be closed, and comes back only if the record changes again", async () => {
+    const ws = await createWorkspace();
+    const opp = await createOpportunity(ws.workspaceId, ws.channels.media_pr);
+    await admin("update public.opportunities set disposition = 'needs_verification' where id = $1", [opp]);
+    const viewer = await addMember(ws.workspaceId, "viewer");
+    await expectPgError(asUser(viewer, (q) => q("select public.close_exception($1, 'opportunity_needs_verification', $2, null)", [ws.workspaceId, opp])), "not authorized");
+    await asUser(ws.ownerId, (q) => q("select public.close_exception($1, 'opportunity_needs_verification', $2, 'Checked by phone')", [ws.workspaceId, opp]));
+    expect(await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId])).toEqual([]);
+    await expectPgError(asUser(ws.ownerId, (q) => q("select public.close_exception($1, 'opportunity_needs_verification', $2, null)", [ws.workspaceId, opp])), "no longer open");
+    await admin("update public.opportunities set updated_at = now() + interval '1 minute' where id = $1", [opp]);
+    expect((await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId])).map((i: any) => i.id)).toEqual([opp]);
+  });
+
+  it("an exception can be given to a bot as a task, and leaves the list when that task is done", async () => {
+    const ws = await createWorkspace();
+    const other = await createWorkspace();
+    const opp = await createOpportunity(ws.workspaceId, ws.channels.affiliates);
+    await admin("update public.opportunities set disposition = 'blocked' where id = $1", [opp]);
+    const bot = await createWorker(ws.workspaceId, { channelIds: [ws.channels.affiliates], name: "Affiliates bot" });
+    await expectPgError(asUser(other.ownerId, (q) => q("select public.exception_to_task($1, 'opportunity_blocked', $2, 'affiliates', null, null)", [ws.workspaceId, opp])), "not authorized");
+    const task = (await asUser(ws.ownerId, (q) => q("select public.exception_to_task($1, 'opportunity_blocked', $2, 'affiliates', $3, 'Ask why they paused') as r", [ws.workspaceId, opp, bot]))).rows[0].r;
+    const { rows } = await admin("select title, details, assigned_worker_id, opportunity_id, kind from public.tasks where id = $1", [task]);
+    expect(rows[0]).toMatchObject({ assigned_worker_id: bot, opportunity_id: opp, kind: "owner.request" });
+    expect(rows[0].title).toMatch(/^Follow up: /);
+    expect(rows[0].details.instructions).toContain("Ask why they paused");
+    const items = await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId]);
+    expect(items).toHaveLength(1);
+    expect(items[0].followup).toMatchObject({ task_id: task, task_status: "queued", worker_name: "Affiliates bot" });
+    await admin("update public.tasks set status = 'succeeded' where id = $1", [task]);
+    expect(await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId])).toEqual([]);
+  });
+
   it("the daily view shows pending approvals, due work and changes, but not plain notes", async () => {
     const ws = await createWorkspace();
     const opp = await createOpportunity(ws.workspaceId, ws.channels.affiliates);

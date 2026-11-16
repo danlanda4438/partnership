@@ -70,7 +70,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
                   {x.link ? <Link href={x.link}><strong>{x.title}</strong></Link> : <strong>{x.title}</strong>}
                   <span className="muted">{x.detail}</span>
                 </div>
-                <span className="list-side"><When at={x.since} relative /></span>
+                <span className="list-side">
+                  {x.followup ? <span className="pill info">With {x.followup.worker_name ?? "a bot"}</span> : null}
+                  <When at={x.since} relative />
+                </span>
               </li>
             ))}
             {d.exceptions.length > 8 ? <li><Link href="/exceptions">See all {d.exceptions.length}</Link></li> : null}
