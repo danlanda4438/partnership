@@ -26,8 +26,6 @@ export interface ExceptionItem {
   link: string | null;
   /** The program this exception belongs to, when known (pre-selects the bot). */
   channel_kind?: string | null;
-  /** Set when the exception was given to a bot and that task isn't done yet. */
-  followup?: { task_id: string; task_status: string; worker_name: string | null; at: string } | null;
 }
 
 export interface DueItem {

@@ -22,13 +22,13 @@ const GROUPS: { title: string; prefix: string; help: string }[] = [
 
 async function closeException(form: FormData) {
   "use server";
+  revalidatePath("/");
   await act("/exceptions", "Closed. It will come back only if the same thing goes wrong again.", ({ db, workspace }) => {
     if (!workspace) throw new Error("No workspace");
     return db.call("close_exception", {
       p_workspace_id: workspace.id, p_kind: str(form, "kind"), p_item_id: str(form, "id"), p_note: optional(form, "note"),
     });
   });
-  revalidatePath("/");
 }
 
 async function giveToBot(form: FormData) {
@@ -37,7 +37,9 @@ async function giveToBot(form: FormData) {
   after(async () => {
     if (serviceConfigured()) await dispatchPending(await getServiceDb()).catch(() => {});
   });
-  await act("/exceptions", "Task created. The bot is notified and will pick it up.", ({ db, workspace }) => {
+  revalidatePath("/exceptions");
+  revalidatePath("/");
+  await act("/tasks?view=board", "Task created from the exception. It's on the board now, and the bot is notified.", ({ db, workspace }) => {
     if (!workspace) throw new Error("No workspace");
     const [channel, bot] = str(form, "assignment").split(":");
     return db.call("exception_to_task", {
@@ -45,7 +47,6 @@ async function giveToBot(form: FormData) {
       p_channel: channel, p_assign_to: bot || null, p_note: optional(form, "note"),
     });
   });
-  revalidatePath("/");
 }
 
 function FollowUp({ x, bots }: { x: ExceptionItem; bots: BotItem[] }) {
@@ -77,7 +78,7 @@ function FollowUp({ x, bots }: { x: ExceptionItem; bots: BotItem[] }) {
           <label>What should the bot do? (optional)
             <textarea name="note" rows={3} maxLength={2000} placeholder="e.g. Check with the partner whether the email arrived, then tell me." />
           </label>
-          <span className="muted small">The bot gets the problem and your note. Emails and impact.com actions still come to you for approval.</span>
+          <span className="muted small">The bot gets the problem and your note. This moves it off Exceptions onto the Tasks board. Emails and impact.com actions still come to you for approval.</span>
           <button type="submit">Create task</button>
         </form>
         <form action={closeException} className="stack card" style={{ flex: 1, minWidth: 200, alignSelf: "flex-start" }}>
@@ -123,13 +124,6 @@ export default async function ExceptionsPage({ searchParams }: { searchParams: P
                   <div className="list-main">
                     {x.link ? <Link href={x.link}><strong>{x.title}</strong></Link> : <strong>{x.title}</strong>}
                     <span className="muted">{x.detail}</span>
-                    {x.followup ? (
-                      <span className="small">
-                        <span className="pill info">With {x.followup.worker_name ?? "a bot"}</span>
-                        <Link href={`/tasks?view=board#${x.followup.task_id}`}>See the task</Link>
-                        <span className="muted"> · {x.followup.task_status.replace(/_/g, " ")}</span>
-                      </span>
-                    ) : null}
                   </div>
                   <span className="list-side small"><When at={x.since} relative /></span>
                   {writer ? <div style={{ flexBasis: "100%" }}><FollowUp x={x} bots={activeBots} /></div> : null}

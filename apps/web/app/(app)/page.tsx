@@ -71,7 +71,6 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
                   <span className="muted">{x.detail}</span>
                 </div>
                 <span className="list-side">
-                  {x.followup ? <span className="pill info">With {x.followup.worker_name ?? "a bot"}</span> : null}
                   <When at={x.since} relative />
                 </span>
               </li>
