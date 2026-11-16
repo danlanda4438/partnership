@@ -33,7 +33,7 @@ _Last updated: 2026-11-10 (spreadsheets imported into production; next: verify, 
 | Partner detail | ✅ | ✅ db + browser | — | ❌ | Evidence timeline with source provenance, people, offers, attachments, tasks; plan / activity / stage / status forms |
 | Approval inbox + detail | ✅ | ✅ db + browser | — | ❌ | Shows exact payload; decision bound to its fingerprint |
 | Task board | ✅ | ✅ browser | — | ❌ | Cancel (owner/admin) |
-| Exception queue | ✅ | ✅ db + browser | — | ❌ | Blocked/failed tasks, uncertain sends, verification, ambiguous identities, unhealthy campaigns, connections |
+| Exception queue | ✅ | ✅ db + browser | — | ❌ | Blocked/failed tasks, uncertain sends, verification, ambiguous identities, unhealthy campaigns, connections. Follow up on each: close it, or give a bot a task about it (`20261119000100`) |
 | Bot administration | ✅ | ✅ db + browser | — | ❌ | Pause/resume, channels, parallel and daily limits. Bots are added in Phase 4 |
 | Integrations & source registry | ✅ | ✅ browser | — | ❌ | Shows every required connection as "not configured" until a real verified check |
 | Settings: notification preferences, members | ✅ | ✅ db | — | ❌ | Preferences saved only; **delivery is not active** until the Phase 4 worker |
