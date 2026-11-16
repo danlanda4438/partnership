@@ -52,7 +52,7 @@ The Bots page shows each bot's address on its card.
 1. Open the bot's chat in Grok and say:
    > Add the custom MCP server https://&lt;your-app&gt;/api/mcp/&lt;bot-address&gt; and name it "Gleeday Ops – &lt;bot name&gt;".
 2. Grok opens a sign-in. Sign in to Gleeday Operations, choose **that same bot** under **Act as**, and click **Allow**.
-3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels. A channel bot sees 18 tools; only Soled (coordinator) sees 21.
+3. Ask the bot: `Call whoAmI on Gleeday Ops`. It must answer with its own name and channels. A channel bot sees 20 tools; only Soled (coordinator) sees 23.
 
 Repeat for each bot, choosing the matching bot each time.
 
@@ -83,6 +83,15 @@ The app then sends `{"source":"gleeday-operations","event":"task.available","tas
 
 Without webhooks, bots only work when you or a schedule start them. You can also give each routine a schedule (at least 5 minutes apart) as a safety net.
 
+## Knowledge files: so the team doesn't depend on one person
+
+Every bot keeps a **knowledge file** in the app: what it does, its standing instructions word for word, how it works, the outside tools it uses (never passwords or keys), voice and templates, partners in progress, lessons learned and open issues.
+
+- **Bots → Knowledge file** (on each bot's card) shows the full handover: the bot's settings, step-by-step instructions to connect a new agent in its place, the rules the app enforces, and the bot's own knowledge. **Copy** or **Download (.md)** it and give it to whoever sets up the new agent.
+- **Weekly:** the daily maintenance run gives each active bot a `knowledge.refresh` task when its file is missing or a week old. The bot rewrites the whole file with `updateKnowledge`. Every version is kept.
+- Owners and admins can edit the bot's part, or click **Ask the bot to update it now**.
+- Text that looks like a password, token or API key is refused.
+
 ## MCP tools (contract v1)
 
 | Tool | Who | Purpose |
@@ -101,6 +110,7 @@ Without webhooks, bots only work when you or a schedule start them. You can also
 | `startApprovedAction` → `reportActionOutcome` | senders | Carry out an approved action once; report the Gmail message id |
 | `reportTaskResult` / `reportBlocked` | all | Finish or stop a task |
 | `getConversation` / `replyToOwner` | all | Read and answer the owner's messages (tasks of kind `owner.message`) |
+| `getKnowledge` / `updateKnowledge(text, changeNote?)` | all | Read and rewrite the bot's own knowledge file (weekly) |
 | `getOverview`, `createTask`, `assignTask` | Soled | Coordinate the team |
 
 Errors: `unauthorized`, `forbidden`, `not_found`, `conflict`, `lease_expired`, `invalid_input`, `not_executable`, `rate_limited`, `internal`.

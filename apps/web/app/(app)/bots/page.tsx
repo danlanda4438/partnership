@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 import { CHANNEL_KINDS, CHANNEL_LABELS } from "@gleeday/domain";
 import { Empty, Flash, PageHeader, Pill, When } from "@/components/ui";
 import { canAdmin, requireWorkspace } from "@/lib/context";
+import { isStale } from "@/lib/knowledge";
 import { botSlug } from "@/lib/mcp/server";
 import type { BotItem } from "@/lib/types";
 import { createBot, revokeConnection, revokeToken, saveBot } from "./actions";
@@ -43,6 +45,9 @@ export default async function BotsPage({ searchParams }: { searchParams: Promise
           <li><strong>claude.ai connector</strong> (for Claude routines): add a custom connector with that address. When asked, sign in here and choose which bot it acts as.</li>
           <li><strong>Token</strong> (for Claude Code, scripts and other agents): create a token below and send it as <code>Authorization: Bearer …</code>.</li>
         </ul>
+        <p className="small">
+          <strong>Setting up a new agent, or replacing one?</strong> Open that bot's <strong>Knowledge file</strong> below. It has the connection steps, the rules and what the bot knows, ready to copy. Each bot rewrites its part every week.
+        </p>
         <p className="muted small">Full steps: docs/BOT_CONNECTION_GUIDE.md in the repository.</p>
       </section>
 
@@ -61,6 +66,12 @@ export default async function BotsPage({ searchParams }: { searchParams: Promise
               {b.active_attempts} working now · last 7 days: {b.succeeded_7d} done, {b.blocked_7d} blocked, {b.failed_7d} failed/expired
             </div>
             <div className="small muted">Last task activity: {b.last_seen_at ? <When at={b.last_seen_at} relative /> : "never"}</div>
+            <div className="knowledge-row top-gap">
+              <Link href={`/bots/${b.id}/knowledge`} className="link-button">Knowledge file</Link>
+              {b.knowledge_updated_at
+                ? <span className="small">{isStale(b.knowledge_updated_at) ? <Pill value="degraded" label="Out of date" /> : null}updated <When at={b.knowledge_updated_at} relative /></span>
+                : <Pill value="error" label="Not written yet" />}
+            </div>
             {admin ? (
               <>
                 <form action={saveBot} className="stack top-gap">

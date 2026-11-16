@@ -245,3 +245,5 @@ label.inline { display: flex; gap: 6px; align-items: center; }
 .qa-buttons { display: flex; gap: 6px; flex-shrink: 0; }
 button.small-btn { padding: 5px 10px; font-size: 13px; }
 @media (max-width: 760px) { .qa-row { flex-wrap: wrap; } .qa-buttons { width: 100%; } }
+
+.knowledge-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

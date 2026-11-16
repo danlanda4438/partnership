@@ -217,6 +217,15 @@ export interface BotItem {
   failed_7d: number;
   blocked_7d: number;
   last_seen_at: string | null;
+  knowledge_updated_at?: string | null;
+}
+
+export interface BotKnowledge {
+  bot: Pick<BotItem, "id" | "name" | "role" | "description" | "status" | "capabilities" | "max_concurrent_tasks" | "daily_action_budget" | "routine_secret_ref" | "channels">;
+  current: { id: string; body: string; change_note: string | null; updated_at: string; written_by: string } | null;
+  history: { id: string; updated_at: string; change_note: string | null; written_by: string }[];
+  refresh_task: { id: string; status: string; created_at: string } | null;
+  what_to_write: string;
 }
 
 export interface Integrations {

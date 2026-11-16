@@ -35,6 +35,7 @@ _Last updated: 2026-11-10 (spreadsheets imported into production; next: verify, 
 | Task board | ✅ | ✅ browser | — | ❌ | Cancel (owner/admin) |
 | Exception queue | ✅ | ✅ db + browser | — | ❌ | Blocked/failed tasks, uncertain sends, verification, ambiguous identities, unhealthy campaigns, connections. Follow up on each: close it, or give a bot a task about it, which moves it to the Tasks board (`20261119000100`, `20261120000100`) |
 | Bot administration | ✅ | ✅ db + browser | — | ❌ | Pause/resume, channels, parallel and daily limits. Bots are added in Phase 4 |
+| Bot knowledge files (handover) | ✅ | ✅ db + MCP + browser | — | ❌ | Per-bot knowledge file on Bots → Knowledge file (copy / download), weekly `knowledge.refresh` task, owner edit, secrets refused (`20261121000100`) |
 | Integrations & source registry | ✅ | ✅ browser | — | ❌ | Shows every required connection as "not configured" until a real verified check |
 | Settings: notification preferences, members | ✅ | ✅ db | — | ❌ | Preferences saved only; **delivery is not active** until the Phase 4 worker |
 | Attachment downloads (signed links) | ✅ | ❌ | — | ❌ | Needs a real Supabase project to test |
