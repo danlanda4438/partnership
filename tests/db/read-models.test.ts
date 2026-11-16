@@ -134,7 +134,7 @@ describe("read models", () => {
     expect((await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId])).map((i: any) => i.id)).toEqual([opp]);
   });
 
-  it("an exception can be given to a bot as a task, and leaves the list when that task is done", async () => {
+  it("an exception can be given to a bot as a task, and moves off the list to the Tasks board", async () => {
     const ws = await createWorkspace();
     const other = await createWorkspace();
     const opp = await createOpportunity(ws.workspaceId, ws.channels.affiliates);
@@ -146,11 +146,13 @@ describe("read models", () => {
     expect(rows[0]).toMatchObject({ assigned_worker_id: bot, opportunity_id: opp, kind: "owner.request" });
     expect(rows[0].title).toMatch(/^Follow up: /);
     expect(rows[0].details.instructions).toContain("Ask why they paused");
-    const items = await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId]);
-    expect(items).toHaveLength(1);
-    expect(items[0].followup).toMatchObject({ task_id: task, task_status: "queued", worker_name: "Affiliates bot" });
-    await admin("update public.tasks set status = 'succeeded' where id = $1", [task]);
     expect(await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId])).toEqual([]);
+    const board = await json(ws.ownerId, "select public.ui_tasks($1) as r", [ws.workspaceId]);
+    expect(board.map((x: any) => x.id)).toContain(task);
+    await expectPgError(asUser(ws.ownerId, (q) => q("select public.exception_to_task($1, 'opportunity_blocked', $2, 'affiliates', null, null)", [ws.workspaceId, opp])), "no longer open");
+    // If the bot gets stuck, its task shows up as an exception of its own.
+    await admin("update public.tasks set status = 'blocked', blocked_reason = 'Partner not answering' where id = $1", [task]);
+    expect((await json(ws.ownerId, "select public.ui_exceptions($1) as r", [ws.workspaceId])).map((i: any) => i.id)).toEqual([task]);
   });
 
   it("the daily view shows pending approvals, due work and changes, but not plain notes", async () => {
