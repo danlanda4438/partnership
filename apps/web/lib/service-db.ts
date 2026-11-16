@@ -4,7 +4,8 @@
 //
 // In local development and tests (GLEEDAY_LOCAL_DB_URL set, not production) it connects
 // to Postgres directly and switches to the service_role role.
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
+import { DB_SCHEMA } from "./db-schema";
 
 export class ServiceDbError extends Error {
   constructor(message: string, readonly code: string | undefined) {
@@ -43,7 +44,10 @@ export async function getServiceDb(): Promise<ServiceDb> {
   const url = supabaseUrl();
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) throw new ServiceDbError("Server is not configured (SUPABASE_SECRET_KEY)", "not_configured");
-  const client: SupabaseClient = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const client = createClient(url, key, {
+    db: { schema: DB_SCHEMA },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   cached = {
     async call<T>(fn: string, args: Record<string, unknown> = {}) {
       const { data, error } = await client.rpc(fn, args);
@@ -66,6 +70,7 @@ export async function localServiceDb(connectionString: string): Promise<ServiceD
     if (!IDENT.test(fn)) throw new ServiceDbError(`invalid function ${fn}`, "22023");
     const keys = Object.keys(args);
     for (const k of keys) if (!IDENT.test(k)) throw new ServiceDbError(`invalid argument ${k}`, "22023");
+    // Local/test databases are built from supabase/migrations, which still use "public".
     const callExpr = `public.${fn}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")})`;
     const client = await pool.connect();
     try {

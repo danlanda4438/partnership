@@ -33,7 +33,11 @@ if (!url || !secret) {
   process.exit(1);
 }
 
-const db = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
+const db = createClient(url, secret, {
+  // Tables live in the "partners" schema on the Gleeday project.
+  db: { schema: process.env.SUPABASE_DB_SCHEMA || "partners" },
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 async function findUser(address) {
   for (let page = 1; ; page++) {

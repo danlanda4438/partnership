@@ -61,6 +61,7 @@ async function localDb(): Promise<Db> {
     if (!IDENT.test(fn)) throw new DataError(`invalid function ${fn}`);
     const keys = Object.keys(args);
     for (const k of keys) if (!IDENT.test(k)) throw new DataError(`invalid argument ${k}`);
+    // Local/test databases are built from supabase/migrations, which still use "public".
     const callExpr = `public.${fn}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")})`;
     const client = await pool.connect();
     try {

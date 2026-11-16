@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { DB_SCHEMA } from "../db-schema";
 import { publicSupabaseEnv } from "../env";
 
 // Bot endpoints authenticate with their own tokens (never Supabase sessions).
@@ -11,6 +12,7 @@ export async function updateSession(request: NextRequest) {
   if (!env) return response; // Setup screen is shown by the page itself.
 
   const supabase = createServerClient(env.url, env.publishableKey, {
+    db: { schema: DB_SCHEMA },
     cookies: {
       getAll() {
         return request.cookies.getAll();
